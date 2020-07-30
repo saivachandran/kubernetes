@@ -1,0 +1,345 @@
+What is kubernetes
+==================
+Kubernetes is an open-source container-orchestration system for automating computer application deployment, scaling, and management. It was originally designed by Google and is now maintained by the Cloud Native Computing Foundation. Wikipedia
+Written in: Go
+Developed by: Cloud Native Computing Foundation
+Initial release: 7 June 2014; 6 years ago
+Stable release: 1.18 / March 25, 2020; 3 months ago
+License: Apache License 2.0
+Original author: Google
+
+
+why we use kubernets
+====================
+
+
+    Kubernetes is developed by Google whereas Docker Swarm is developed by Docker Inc.
+    Kubernetes provides Auto-scaling whereas Docker Swarm doesn’t support autoscaling.
+    Kubernetes supports up to 5000 nodes whereas Docker Swarm supports more than 2000 nodes.
+    Kubernetes is less extensive and customizable whereas Docker Swarm is more comprehensive and highly customizable.
+    Kubernetes provides low fault tolerance while Docker provides high fault tolerance.
+
+Key feature of kubernets
+========================
+
+    Offers automated scheduling
+    Self-Healing capabilities
+    Automated rollouts & rollback
+    Horizontal Scaling & Load Balancing
+    Provides a higher density of resource utilization
+    Offers enterprise-ready features
+    Application-centric management
+    Auto-scalable infrastructure
+    You can create predictable infrastructure
+    Provides declarative configuration
+    Deploy and update software at scale
+    Offers environment consistency for development, testing, and production 
+
+
+Key feature of coe (Kubernets orchestration engine)
+===================================================
+
+1. clustering
+
+2. scheduling
+
+3. scaling
+
+4. load balancing
+
+5. fault tolarance
+
+6. app deployment
+
+23.07.2020
+----------
+Kubernetes introduction
+=======================
+
+who need kubernets
+------------------
+
+1. developers
+
+2. system admins
+
+3. managers
+
+
+Course Objectives
+------------------
+1. kubernetes- overview
+
+2. containers - Docker
+
+3. container orchestration	
+
+4. Demo - setup kubernets
+
+5. kubernets - concepts - pods |replicasets| Deployment | services
+
+6. Networking in kubernets
+
+7. Kubernets Management - kubctl
+
+8. Kubernets Defintion files - YAML
+
+9. Kubernets on cloud - aws/Gcp
+
+
+
+container orchestration
+=======================
+
+container orchestration based on load it's scale up and down the container. Automatically deploying and managing container it's called container orchestration
+
+Kubernets container orchestration technology
+
+multiple technology available
+
+1. Docker swarm from docker
+
+2. kubernets from google
+
+3. messos from apache 
+
+
+when load increases kubernetes launch new instances 
+
+when we run out of hardware scale up the number of nodes without down the application
+
+24.07.2020
+----------
+
+kubernets Architecture
+======================
+
+1. Nodes
+
+Nodes is a machine physical or virtual,  nodes is a worker machine thats why container launch by kubernets 
+
+it's also called minions in the past 
+
+2. cluster
+
+cluster is set of nodes group together, if one node fail your application still accessible by another node 
+
+3. Master 
+
+Master responsible for managing cluster,  information of the cluster members stored in the master 
+
+master is a another kubernets installed in it 
+
+
+kubernets components
+====================
+
+1. api server
+ 
+2. etcd service 
+
+3. scheduler
+
+4. controller
+
+5. container runtime
+
+6. kubctl (kublex service)
+
+
+
+
+1. Api server 
+access frontend of kubernets,  users, management devices, command line interfaces, all talk to api server to interact with kubernets
+
+2. etcd 
+
+distributed  reliable key value store used by kubernets to manage the cluster 
+
+when you have multible nodes multible master etcd stored all nodes and cluster information in distributed manner
+
+etcd responsible for implementing logs with in cluster ensure no conflix between master 
+
+3. scheduler
+
+scheduler responsible for distributing works across multible nodes it looks newly created container and assign them into nodes
+
+4. controller 
+
+controlled brain behind archestration noticing and responsible when nodes container or endpoints goes down 
+
+controller make decision to bring up new container in such a cases
+
+5. container runtime 
+
+container runtime underline software in our case it's happened to be docker
+
+
+6. kublet 
+
+kublet is agent that run each node on the clutser, kublet make sure container running on nodes as expected 
+
+
+master vs worker
+===============
+
+so far we see two types of server master and worker 
+
+how does one serer as master another one as a slave 
+
+worker node aslo known as minions as container hosted to run docker container need to runtime install 	
+
+workernode -- cri-o
+
+container runtime -- rkt
+
+
+kube api server thats what makes master
+
+
+worker node have kublet agent to interact with master
+
+all the information and key value stored in the master -- etcd
+
+master also has controll manager and scheduler 
+
+
+
+kubctl kube command line tool 
+
+kube controll tool used to deploy and manage on a kubernets cluster 
+
+get cluster information get status of other node 
+
+# kubctl run hello-minikube
+
+kubctl run command used to deploy application
+
+
+kubctl cluster-info
+
+view information about cluster 
+
+kubctl get nodes
+
+list the nodes of kubernets cluster
+
+
+27.07.2020
+----------
+
+kubernets setup
+===============
+
+
+we can setup kubernets local machine or virtual machine using minikube microk8s kubeadm   
+
+
+kubeadm tool manage used to bootstrap production grade in the kubernets
+
+
+cloud enviroment
+================
+
+Google cloud (Gcp)
+
+Aws 
+
+Microsoft azure
+
+
+
+Devops websites
+===============
+
+https://kodekloud.com/courses
+
+
+Minikube
+========
+
+This is easiest way to start kubernets on your local system
+
+
+Master 
+------
+
+1. kube-apiserver
+
+2. etcd
+
+3. node-controller
+
+4. replica controller
+
+
+Worker node
+-----------
+
+1. kublet
+
+2. container runtime
+
+
+
+Minikube all of diffrent components into single image they configure singlenode kubernets cluster, we can get started in a matter of minutes
+
+package into iso image available on online minikube provide executable commandline utility automatically download iso
+
+you must install hybervisor on your system
+
+finally you kubectl command line tool to interact with kubernets
+
+
+you need three thing to run cluster 
+
+
+1. hypervisor
+
+2. kubctl
+
+3. minikube
+
+
+
+29.07.2020
+=========
+
+Minikube
+========
+
+Minikube is a tool that makes it easy to run Kubernetes locally. Minikube runs a single-node Kubernetes cluster inside a Virtual Machine (VM) on your laptop for users looking to try out Kubernetes or develop with it day-to-day
+
+
+Minikube is an open source tool that enables you to run Kubernetes on your laptop or other local machine. It can work with Linux, Mac, and Windows operating systems. It runs a single-node cluster inside a virtual machine on your local machine
+
+
+what is pod 
+==========
+Pods. Unlike other systems you may have used in the past, Kubernetes doesn't run containers directly; instead it wraps one or more containers into a higher-level structure called a pod. Any containers in the same pod will share the same resources and local network. ... Pods are used as the unit of replication in Kubernetes
+
+
+A Pod is the basic execution unit of a Kubernetes application--the smallest and simplest unit in the Kubernetes object model that you create or deploy. A Pod represents processes running on your cluster. ... Pods in a Kubernetes cluster can be used in two main ways: Pods that run a single container.
+
+
+A cluster consists of one master machine and multiple worker machines or nodes. The master coordinates between all the nodes. A pod is the smallest unit of a cluster. It represents a running process on a cluster.
+
+
+
+
+
+
+
+
+
+ 	
+
+
+
+	
+
+
+
+
+
+

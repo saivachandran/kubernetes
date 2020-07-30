@@ -1,0 +1,205 @@
+29.07.2020
+=========
+
+Minikube
+========
+
+Kubernetes official document page 
+
+https://kubernetes.io/docs/tasks/tools/
+
+Before install minikube we must install kubectl utility
+
+
+Install and Set Up kubectl
+--------------------------
+
+https://kubernetes.io/docs/tasks/tools/install-kubectl/
+
+
+
+Install kubectl binary with curl on Linux
+
+Download the latest release with the command:
+
+
+# curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl"
+
+
+
+Make the kubectl binary executable.
+
+# chmod +x ./kubectl
+
+
+Move the binary in to your PATH.
+
+# sudo mv ./kubectl /usr/local/bin/kubectl
+
+
+Test to ensure the version you installed is up-to-date:
+
+# kubectl version --client
+
+
+Before install minikube check irtualization enabled or installed in your system
+
+
+# grep -E --color 'vmx|svm' /proc/cpuinfo
+
+
+
+Install Minikube via direct download
+If you're not installing via a package, you can download a stand-alone binary and use that.
+
+
+# curl -Lo minikube https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64 \
+  && chmod +x minikube
+
+
+# sudo install minikube /usr/local/bin/
+
+
+# minikube start --driver=virtualbox or docker
+
+
+check minikube status
+
+# minikube status
+
+minikube
+type: Control Plane
+host: Running
+kubelet: Running
+apiserver: Running
+kubeconfig: Configured
+
+
+
+view kubernets nodes
+
+# kubectl get nodes
+
+NAME       STATUS   ROLES    AGE   VERSION
+minikube   Ready    master   25m   v1.18.3
+
+
+30.07.2020
+==========
+Let’s create a Kubernetes Deployment using an existing image named echoserver, which is a simple HTTP server and expose it on port 8080 using --port
+
+# kubectl create deployment hello-minikube --image=k8s.gcr.io/echoserver:1.10
+
+deployment.apps/hello-minikube created
+
+
+
+view deployments
+----------------
+
+$ kubectl get deployments
+
+NAME             READY   UP-TO-DATE   AVAILABLE   AGE
+hello-minikube   0/1     1            0           54s
+
+
+
+To access the hello-minikube Deployment, expose it as a Service:
+
+$ kubectl expose deployment hello-minikube --type=NodePort --port=8080
+
+service/hello-minikube exposed
+
+
+
+
+Get the URL of the exposed Service to view the Service details:
+
+$ minikube service hello-minikube --url
+
+
+ Executing "docker container inspect minikube --format={{.State.Status}}" took an unusually long time: 5.445311092s
+💡  Restarting the docker service may improve performance.
+http://172.17.0.2:30163
+
+
+copy the url past into browser o/p like below
+
+
+Hostname: hello-minikube-64b64df8c9-bknm4
+
+Pod Information:
+	-no pod information available-
+
+Server values:
+	server_version=nginx: 1.13.3 - lua: 10008
+
+Request Information:
+	client_address=172.18.0.1
+	method=GET
+	real path=/
+	query=
+	request_version=1.1
+	request_scheme=http
+	request_uri=http://172.17.0.2:8080/
+
+Request Headers:
+	accept=text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8
+	accept-encoding=gzip, deflate
+	accept-language=en-US,en;q=0.5
+	connection=keep-alive
+	host=172.17.0.2:30163
+	upgrade-insecure-requests=1
+	user-agent=Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0
+
+Request Body:
+	-no body in request-
+
+
+
+
+Delete the hello-minikube Service:
+
+$ kubectl delete services hello-minikube
+
+service "hello-minikube" deleted
+
+
+
+Delete the hello-minikube Deployment:
+
+$ kubectl delete deployment hello-minikube
+
+deployment.apps "hello-minikube" deleted
+
+
+$ kubectl get pods
+NAME                              READY   STATUS        RESTARTS   AGE
+hello-minikube-64b64df8c9-bknm4   1/1     Terminating   0          36m
+
+
+$ kubectl get pods
+No resources found in default namespace.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

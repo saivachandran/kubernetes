@@ -326,6 +326,534 @@ A cluster consists of one master machine and multiple worker machines or nodes. 
 
 
 
+01.08.2020
+=========
+
+kunernetes-concepts-pods
+------------------------
+
+Asssuption
+
+Docker
+
+kubernetes cluster
+
+
+Application already devloped build and as docker image  available in docker repository like dockerhub
+
+kubernetes can pullup from dockerhub and also kubernetes cluster setup done already
+
+it single node setup or multinode setup 
+
+
+
+kubernetes ultimate aim deploy application container on set of machines as worker node in a cluster 
+
+kubernetes doesn't deploy container directly, container encabsulated into kubernetes object known as pod
+
+
+pod is a single instance of application, pod is smallest object that you can create in kubernetes
+
+
+kubernets incase load increses we create new pod in same node in singe node cluster
+
+
+web application runs on two seperate pod in same node 
+
+
+if load increases further node not sufficient to handle connection launch new pod in new node, new node should added in the cluster
+
+
+pod have one to one relattionship with containers running with your application
+
+to scale up create new pod to scale down delete existing pod
+
+
+single pod can have mutible caontainers
+
+helper container do some supporting task 
+
+helper container alongside with your application container
+
+
+when new applicaton created helper container also created, application dyes helper container also dyes
+
+
+inside the pod two container can communicate each other using local network
+
+
+how to deploy pods
+
+
+$ kubectl run nginx --image nginx (image downloaded from dockerhub repository)
+
+get list of pods in our cluster
+
+$ kubectl get pods
+
+10.08.2020
+==========
+
+what is yaml
+============
+
+YAML is a human-readable data-serialization language. It is commonly used for configuration files and in applications where data is being stored or transmitted. YAML targets many of the same communications applications as Extensible Markup Language but has a minimal syntax which intentionally differs from SGML.
+
+
+yaml file used to represent data this case is a configuration data;
+
+1.xml
+
+2.json
+
+3.yaml
+
+yaml
+----
+
+key value fair we must follow space after colon
+
+fruit: Banana
+
+array/list
+
+fruits
+- banana
+- orange
+- apple
+
+- represent array of element
+
+dictionary
+
+set of proerty group together under an item
+
+you must have equal number of space before each item in the property
+
+Number of spaces in each propery is key in the yaml file
+
+
+we store diffrenet property of single object we use dictionary
+
+
+apple: fruit
+
+
+Dictionary are unordered collection
+
+list are ordered collection
+
+any line comes with # that will automatically ignored 
+
+
+dictionary
+
+banana:                           
+
+  calories: .5
+  fat: 5
+  carbs: 2
+
+
+banana:
+  calories: .5
+  carbs: 2
+  fat: 5
+
+list
+
+fruits:
+
+- orange
+- apple
+- mango
+
+
+fruits:
+
+- orange
+- apple
+- mango
+
+# list of fruits  # commented out
+
+fruits:
+
+- orange
+- apple
+- mango
+
+
+12.08.2020
+==========
+
+creating pod using yaml
+
+Kubernetes uses yaml file as input
+
+yaml input such as creation of pods replicasets service deployments 
+
+
+
+kubernetes definition file contain four top level fields
+
+pod-definition.yml
+
+apiversion: 
+kind:
+metadata:
+
+spec:
+
+
+These are toplevel or root level properties you must have them in your configuration file
+
+apiversion
+----------
+
+this is version of kubernetes using creating object 
+
+depending on what we try to create we must use correct api version
+
+since we woking on pod we set api version v1
+
+kind
+----
+
+kind represent the type of object we going to create this case happend to be a pod
+
+could be other possible values replicasets service deployments
+
+Metadata
+--------
+
+metadata represent data about the object
+
+first two specify in the string
+
+metadata specify in the form of dictionary
+
+labels:
+
+we can easily filers the pods if we set labels before application deployments
+
+reason for container list/array, pod have mulitiple container
+
+- indicate this is first item in the list 
+
+
+apiversion: v1 --- string
+kind: pod      --- string
+metadata:      ---- dictionary
+  name: myapp-pod
+  labels:
+      app: myapp
+      type: front-end
+
+spec:
+  containers:   ----- list/array
+    - name: nginx-container
+      image: nginx
+
+
+once we create yaml file use below command to create pod
+
+$ kubectl create -f pod-definition.yml
+
+once we create pod how to summarize pod
+
+$ kubectl get pods
+
+$ kubectl describe pod myapp-pod
+ 
+
+
+19.08.2020
+=========
+
+Kubernetes controller 
+--------------------
+
+controller brain behind kubernetes their process monitor kubernetes object response accordingly
+
+Replication controller
+---------------------
+
+what is replica why do we need replication controller
+
+Go back our scenario single pod running application  some reasons application crashes pod fail
+
+user no longer able to access our appplication, to prevent user lost access our application, we would run more than one instance  or pod
+
+that way if one fail still our application runs on another one	
+
+
+replication controller helps to run multiple instance on single pod in the kubernetes cluster does providing high availability
+
+Even if you have single pod, replication controller can help automatically bring up new pod when existing one fail
+
+
+another reason we need replication controller create multiple pod to share the load
+
+simple scenario single pod serving set of users, number of user increses we deploy additional pod 
+
+demand further increases we worked out of resources, we could deploy additional pod  across the node
+
+replication controller span across multiple nodes, in the cluster balance load across multiple pod 
+
+scale our application when demand increases 
+
+
+replication controller and replica set have same purpose but not the same  
+
+
+replication controller is owner technology it's replaced by replica set 
+
+
+replica set new recomented way to set replication
+
+replication controller create multiple instances of pod
+
+
+set replication controller
+-------------------------
+
+vim  rc-defintion.yml
+
+apiVersion: v1
+kind:ReplicationController
+metadata:
+  name: myapp-rc
+  labels:
+      app: myapp
+      type: front-end
+
+spec:
+ - template:
+     metadata:
+       name: myapp-pod
+       labels: 
+         app: myapp
+         type: front-end
+
+     spec:
+       containers:
+       - name: nginx-container
+         image: nginx
+   
+   replicas: 3
+
+
+once file ready run below command
+
+
+$ kubectl create -f rc-defintion.yml
+
+replicationcontroller myapp-rc created
+
+to view list of replication controller 
+
+$ kubectl get replicationcontroller
+
+
+to view list of pods
+
+
+$ kubectl get pods
+
+
+selector is major difference between replication controller and replicaset
+
+replicaset
+----------
+
+vim  replicaset-defintion.yml
+
+apiVersion: apps/v1
+kind:ReplicaSet
+metadata:
+  name: myapp-replicaset
+  labels:
+      app: myapp
+      type: front-end
+
+spec:
+ - template:
+     metadata:
+       name: myapp-pod
+       labels: 
+         app: myapp
+         type: front-end
+
+     spec:
+       containers:
+       - name: nginx-container
+         image: nginx
+   
+   replicas: 3
+   selectors:
+      matchlabels:
+         type: front-end
+
+
+
+once finish yaml file run below command
+
+$ kubectl create -f replicaset-definition.yml
+
+view list of replicasets
+
+$ kubectl get replicaset
+
+$ kubectl get pods 
+
+
+
+
+labels and selectors
+--------------------
+
+why labels and pods are objects in kubernetes
+
+lets see one simple scenerio 
+
+we we front end application as 3 pods
+
+create replication controller or replicaset ensure 3 active pod running
+
+using replicaset we can monitor existing pod
+
+role of replicaset monitor the pods incase any of them fail 
+
+how does replicaset knows what pod monitor
+
+labeling in pod during creation comes handy to help replicaset which pod need to be monitor
+
+now we provide labels as filter to replicaset
+
+
+incase future any one pod fail replica need to create new pod, in this case we need template section
+
+
+
+how we scale replicasets
+-----------------------
+
+we have 3 replicas in future we decided to scale upto 6	
+
+first update number of replicas in the definition file
+
+vim  rc-defintion.yml
+
+apiVersion: apps/v1
+kind:ReplicaSet
+metadata:
+  name: myapp-replicaset
+  labels:
+      app: myapp
+      type: front-end
+
+spec:
+ - template:
+     metadata:
+       name: myapp-pod
+       labels: 
+         app: myapp
+         type: front-end
+
+     spec:
+       containers:
+       - name: nginx-container
+         image: nginx
+   
+   replicas: 6
+   selectors:
+      matchlabels:
+         type: front-end
+
+
+$ kubectl replace -f replicaset-definition.yml
+
+above command update the replicas upto 6
+
+second way to do it 
+
+$ kubectl scale --replicas=6 -f  replicaset-definition.yml
+
+
+$ kubectl scale --replicas=6 -f replicaset myapp-replicaset
+
+
+commands
+-------
+
+create replicaset 
+
+$ kubectl create -f replicaset-definition.yml
+
+
+view list of replicaset
+
+$ kubectl get replicasets
+
+
+delete replicaset
+
+$ kubectl delete replicaset myapp-replicaset
+
+
+update replicas use replace command
+
+$ kubectl replace -f  replicaset-definition.yml
+
+
+without modifying file we can update replicas
+
+$ kubectl scale --replicas=6 -f replicaset-definition.yml
+
+
+
+
+
+
+
+
+
+
+
+
+
+   
+
+
+   
+ 
+
+
+
+
+
+
+
+
+  
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

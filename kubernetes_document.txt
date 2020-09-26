@@ -814,6 +814,100 @@ $ kubectl scale --replicas=6 -f replicaset-definition.yml
 
 
 
+07.09.2020
+==========
+
+Kubernetes deployments
+----------------------
+
+. how you want deploy application in production enviroment
+
+. for example you have web server deploy in production enviroment we need many enviroment 
+
+. whenever newer version application build and available in docker registry like to upgrade docker instance seamlesly
+
+. whenever upgrade instances you don't upgrade all of them at once this may impact user accessing our application 
+
+. you might want to upgrade one after another that kind of upgrade known s rolling upgrade 
+
+. suppose you perform upgarde result is error you ask to undo recent change like to rollback changes recently carried out
+
+. you like to make multiple changes like undelying webserver as well as scaling your enviroments resource allocation etc
+
+. you don't want apply each change imediatly you like to make pause enviroment and resume all changes rolledout together
+
+. all of the capablities in kubernetes deployments
+
+. each container in encabsulated as pod
+
+. deployment is kubernetes object, deployment provide capablity upgrade undeline instances rolling update pause changes and resume changes 
+
+
+
+how do we create deployment
+
+. the content of deployment file exactly similar to replicat except kind
+
+vim definition-deployment.yml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp-replicaset
+  labels:
+    app: myapp
+spec:
+  selector:
+    matchLabels:
+      app: myapp
+  replicas: 3
+   
+  template:
+    metadata:
+      name: nginx-2
+      labels:
+        app: myapp
+    spec:
+      containers:
+      - name: nginx 
+        image: nginx    
+
+
+once file completed 
+
+$ kubectl create -f definition-deployment.yml
+
+
+get deployments
+
+$ kubectl get deployments
+
+view replicasets
+
+$ kubectl get replicasets
+
+view pods
+
+$ kubectl get pods
+
+view full details of deployments
+
+$ kubectl get all
+
+
+    
+
+
+
+
+  	
+
+
+
+
+
+
+
 
 
 

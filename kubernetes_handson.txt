@@ -425,6 +425,301 @@ $ kubectl scale replicaset myapp-replicaset --replicas=5
 
 
 $ kubectl get pods
+
+
+26.09.2020
+==========
+
+create folder deployment
+
+vim deployment.yaml
+
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp-deployment
+  labels:
+    app: myapp
+spec:
+  selector:
+    matchLabels:
+      app: myapp
+  replicas: 6
+  template:
+    metadata:
+      name: nginx-2
+      labels:
+        app: myapp
+    spec:
+      containers:
+        - name: nginx 
+          image: nginx    
+
+
+:wq!
+
+
+
+create deployment using below command
+
+first check pods 
+----------------
+
+$ kubectl get pods
+
+No resources found in default namespace.
+
+
+create deployment
+-----------------
+
+$ kubectl create -f deployment.yaml
+
+deployment.apps/myapp-deployment created
+
+
+check the status of deployment
+------------------------------
+
+$ kubectl rollout status deployment.apps/myapp-deployment
+
+
+deployment "myapp-deployment" successfully rolled out
+
+
+Delete deployment
+-----------------
+
+$ kubectl delete deployment myapp-deployment
+
+deployment.apps "myapp-deployment" deleted
+
+
+create deployment again
+-----------------------
+
+$ kubectl create -f deployment.yaml
+
+
+check satus of deployment
+------------------------
+
+bring the pod one at a time after deleting deployment
+
+$ kubectl rollout status deployment.apps.myapp-deployment
+
+Waiting for deployment "myapp-deployment" rollout to finish: 0 of 6 updated replicas are available...
+Waiting for deployment "myapp-deployment" rollout to finish: 1 of 6 updated replicas are available...
+Waiting for deployment "myapp-deployment" rollout to finish: 2 of 6 updated replicas are available...
+Waiting for deployment "myapp-deployment" rollout to finish: 3 of 6 updated replicas are available...
+Waiting for deployment "myapp-deployment" rollout to finish: 4 of 6 updated replicas are available...
+Waiting for deployment "myapp-deployment" rollout to finish: 5 of 6 updated replicas are available...
+deployment "myapp-deployment" successfully rolled out
+
+to see history of deployment
+----------------------------
+
+$ kubectl rollout history deployment/myapp-deployment
+
+deployment.apps/myapp-deployment 
+REVISION  CHANGE-CAUSE
+1         <none>
+
+
+delete deployment again
+-----------------------
+
+$ kubectl delete deployment myapp-deployment
+
+deployment.apps "myapp-deployment" deleted
+
+
+
+use record option create deployment
+-----------------------------------
+
+kubectl creaate -f deployment.yaml --record
+
+
+now change cause recorded
+-------------------------
+
+$ kubectl rollout history deployment/myapp-deployment
+
+deployment.apps/myapp-deployment 
+REVISION  CHANGE-CAUSE
+1         kubectl create --filename=deployment.yaml --record=true
+
+
+
+now try to change deployment
+----------------------------
+
+$ kubectl describe deployment myapp-deployment
+Name:                   myapp-deployment
+Namespace:              default
+CreationTimestamp:      Sat, 26 Sep 2020 16:58:50 +0530
+Labels:                 app=myapp
+Annotations:            deployment.kubernetes.io/revision: 1
+                        kubernetes.io/change-cause: kubectl create --filename=deployment.yaml --record=true
+Selector:               app=myapp
+Replicas:               6 desired | 6 updated | 6 total | 6 available | 0 unavailable
+StrategyType:           RollingUpdate
+MinReadySeconds:        0
+RollingUpdateStrategy:  25% max unavailable, 25% max surge
+Pod Template:
+  Labels:  app=myapp
+  Containers:
+   nginx:
+    Image:        nginx
+    Port:         <none>
+    Host Port:    <none>
+    Environment:  <none>
+    Mounts:       <none>
+  Volumes:        <none>
+Conditions:
+  Type           Status  Reason
+  ----           ------  ------
+  Available      True    MinimumReplicasAvailable
+  Progressing    True    NewReplicaSetAvailable
+OldReplicaSets:  <none>
+NewReplicaSet:   myapp-deployment-58f49b7545 (6/6 replicas created)
+Events:
+  Type    Reason             Age    From                   Message
+  ----    ------             ----   ----                   -------
+  Normal  ScalingReplicaSet  5m55s  deployment-controller  Scaled up replica set myapp-deployment-58f49b7545 to 6
+
+
+
+
+change nginx into lower version
+
+$ kubectl edit deployment myapp-deployment --record
+
+:wq!
+
+it's bring up new pod terminate the old pod
+
+
+check status of deployment
+--------------------------
+
+$ kubectl rollout status deployment myapp-deployment
+
+view history of deployment
+--------------------------
+
+$ kubectl rollout history deployment myapp-deployment
+
+
+$ kubectl describe deployment myapp-deployment
+
+
+made another change in dployment in diffrent way
+-----------------------------------------------
+
+$ kubectl set image deployment myapp-deployment nginx=nginx:1.18-perl --record
+
+
+$ kubectl rollout status deployment myapp-deployment
+
+Waiting for deployment "myapp-deployment" rollout to finish: 4 out of 6 new replicas have been updated...
+Waiting for deployment "myapp-deployment" rollout to finish: 4 out of 6 new replicas have been updated...
+Waiting for deployment "myapp-deployment" rollout to finish: 4 out of 6 new replicas have been updated...
+Waiting for deployment "myapp-deployment" rollout to finish: 4 out of 6 new replicas have been updated...
+Waiting for deployment "myapp-deployment" rollout to finish: 5 out of 6 new replicas have been updated...
+Waiting for deployment "myapp-deployment" rollout to finish: 5 out of 6 new replicas have been updated...
+Waiting for deployment "myapp-deployment" rollout to finish: 5 out of 6 new replicas have been updated...
+Waiting for deployment "myapp-deployment" rollout to finish: 5 out of 6 new replicas have been updated...
+Waiting for deployment "myapp-deployment" rollout to finish: 2 old replicas are pending termination...
+Waiting for deployment "myapp-deployment" rollout to finish: 2 old replicas are pending termination...
+Waiting for deployment "myapp-deployment" rollout to finish: 2 old replicas are pending termination...
+Waiting for deployment "myapp-deployment" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "myapp-deployment" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "myapp-deployment" rollout to finish: 5 of 6 updated replicas are available...
+deployment "myapp-deployment" successfully rolled out
+
+$ kubectl describe deployment myapp-deployment
+
+
+now we can see changes has been done 
+
+
+$ kubectl rollout status deployment myapp-deployment
+
+
+$ kubectl rollout history deployment myapp-deployment
+
+deployment.apps/myapp-deployment 
+REVISION  CHANGE-CAUSE
+3         kubectl edit deployment myapp-deployment --record=true
+4         kubectl edit deployment myapp-deployment --record=true
+5         kubectl set image deployment myapp-deployment nginx=nginx:1.18-perl --record=true
+
+
+check pods are running
+
+$ kubectl get pods
+
+incase new pods not working we can revert back into undo command
+----------------------------------------------------------------
+
+$ kubectl rollout undo deployment/myapp-deployment
+
+$ kubectl rollout status deployment myapp-deployment
+
+$ kubectl rollout history deployment myapp-deployment
+
+$ kubectl describe deployment myapp-deployment
+
+
+
+mae another change
+-------------------
+
+$ kubectl edit deployment myapp-deployment --record
+
+
+kubectl get deployment myapp-deployment
+
+NAME               READY   UP-TO-DATE   AVAILABLE   AGE
+myapp-deployment   5/6     3            5           71m
+
+
+kubectl get pods
+
+NAME                                READY   STATUS             RESTARTS   AGE
+myapp-deployment-789c649f95-76mq7   1/1     Running            0          8m43s
+myapp-deployment-789c649f95-hj88s   1/1     Running            0          8m41s
+myapp-deployment-789c649f95-j7pr2   1/1     Running            0          8m12s
+myapp-deployment-789c649f95-psvkt   1/1     Running            0          8m23s
+myapp-deployment-789c649f95-q9x6m   1/1     Running            0          8m43s
+myapp-deployment-84cfd5697c-9s2lk   0/1     ImagePullBackOff   0          47s
+myapp-deployment-84cfd5697c-fwn4s   0/1     ImagePullBackOff   0          48s
+myapp-deployment-84cfd5697c-gvjkw   0/1     ImagePullBackOff   0          48s
+
+
+even though we specify the wrong image application still can be accessible to end user 
+
+
+
+$ kubectl rollout history deployment myapp-deployment
+
+
+now revert back into older version
+---------------------------------
+
+$ kubectl rollout undo deployment myapp-deployment 
+
+$ kubectl get pods
+
+$ kubectl describe deployment myapp-deployment
+
+
+
+
+
  
 
 

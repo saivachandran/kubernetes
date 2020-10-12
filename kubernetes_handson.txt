@@ -717,8 +717,79 @@ $ kubectl get pods
 $ kubectl describe deployment myapp-deployment
 
 
+12.10.2020
+==========
+
+kubernetes-service
+------------------
+
+in previous deployment creates few pods
+
+$ kubectl get deployment
+NAME               READY   UP-TO-DATE   AVAILABLE   AGE
+myapp-deployment   6/6     6            6           11m
 
 
+$ kubectl get pods
+NAME                                READY   STATUS    RESTARTS   AGE
+myapp-deployment-58f49b7545-25kb5   1/1     Running   0          13m
+myapp-deployment-58f49b7545-29qwc   1/1     Running   0          13m
+myapp-deployment-58f49b7545-dw559   1/1     Running   0          13m
+myapp-deployment-58f49b7545-nbs5n   1/1     Running   0          13m
+myapp-deployment-58f49b7545-r7jn9   1/1     Running   0          13m
+myapp-deployment-58f49b7545-xvjns   1/1     Running   0          13m
+
+
+create directory called service
+
+$ mkdir service
+
+$ cd service
+
+$ vim service-definition.yaml
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: myapp-service
+spec:
+  type: NodePort
+  ports:
+    - port: 80
+      targetPort: 80
+      nodePort: 30004
+  selector:
+    app: myapp    
+
+
+save and create service
+
+$ kubectl create -f service-definition.yaml 
+service/myapp-service created
+
+
+view services
+-------------
+ 
+$ kubectl get svc
+NAME            TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)        AGE
+kubernetes      ClusterIP   10.96.0.1      <none>        443/TCP        43m
+myapp-service   NodePort    10.104.47.40   <none>        80:30004/TCP   8s
+
+
+
+get kubernetes service url
+--------------------------
+
+$ minikube service myapp-service --url
+
+http://172.17.0.3:30004
+
+
+Access url in the browser
+-------------------------
+
+http://172.17.0.3:30004
 
  
 

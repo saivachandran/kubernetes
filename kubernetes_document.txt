@@ -895,6 +895,213 @@ view full details of deployments
 $ kubectl get all
 
 
+03.10.2020
+=========
+
+Networking in kubernetes
+------------------------
+
+we have single node kubernetes cluster 
+
+node has ip address 192.168.1.2 we use to access kubernetes node and ssh etc
+
+if your using minikube setup we use minikube virtual machine ip address
+
+
+single node kubernetes cluster we created single pod as we know pod hosted a container 
+
+docker world ip address assigned to docker container 
+
+kubernetes world ip address assined to pod
+
+each pod in kubernetes has own internal ip address in this case ip assined to pod range 10.244.0.2 series 
+
+so how we getting this ip address  when kubernetes initially configured we create internal private network 10.244.0.0
+
+
+when we deploy multiple pod all get seperate ip address from the network 
+
+accessing other pod using internal ip is not good idea subject to change when pod recreated 
+
+
+important to understand how internal network works in kubernetes
+
+
+how it's works when you have multible nodes in cluster
+
+
+we have two nodes no part of cluster, pod deployed on two node they have own internal network
+
+internal network not work when part of cluster 
+
+kubernetes pod container communicate without nat 
+
+kubernetes need network solution cisco aci network, clilium, flannel, nsx, calico
+
+
+07.10.2020
+==========
+
+kubernetes services
+------------------
+
+. kubernetes services enable communication between various compontents within ouside of application
+
+. kubernetes services us connect application together with other application or user
+
+. our application has groups of pods 
+
+. such as group for serving frontend 
+
+. another group for serving backend process
+
+. third group connecting external data source
+
+. services enable connectivity to these groups of pods
+
+. services made frontend available to end user
+
+. it helps communication between backend and frontend pod 
+
+. let's take a look one use case of services
+
+.  let's start with external communication 
+
+. we deployed our pod having web application running on it
+
+. how external user access our application
+
+.  kubernetes node has ip address 192.168.1.2 
+
+. our labtab on same network 192.168.1.10 
+
+. internal pod network range is 10.244.0.0
+
+. pod has ip of 10.244.0.2
+
+. clearly i can't ping or access pof from diffrent network
+
+. from the node we can access kubernetes pod view the webpage
+
+. from the my labtop i need access web application, how we done that so we need something in middle help us access application
+
+. this where kubernetes service come into play
+
+. service just a object like  pod replicaset deployment 
+
+. one of his use case listen to port on node forward request on that port running the webapplication 
+
+. this type of service known as nodeport service because service listen port on node forward request to pod
+
+
+
+service types
+-------------
+
+1. nodeport
+
+service makes interal pod is accessible 
+
+2. cluster ip
+
+this case cluster create virtual ip inside the cluster enable services between diffrent services such as frontend application backend db
+
+3. loadbalancer
+
+distribute the load to appropriate webappication in frontend tier
+
+
+nodeport kubernetes service
+--------------------------
+
+. service can help mapping port on node to port on pod
+
+. port1 on is actual webserver running in 80 refered to target port
+
+. port2 in service port is simply refered as port
+
+. service like a virtual server inside a node it has own ip address that's cluster ip address 
+
+. finally we hvae port node itself nodeport valid range 30000 to 32767
+
+
+
+crete sevice-definition.yaml file
+
+vim sevice-definition.yaml
+
+apiVersion: v1
+kind: service
+metadata: 
+  name: myapp-service
+
+spec:
+    type: Nodeport
+    ports:
+     - targetport: 80
+       port: 80
+       nodeport: 30008
+    selector:
+      app: myapp
+      type: frontend
+       
+
+create service
+-------------
+
+$ kubectl create -f  sevice-definition.yaml
+
+
+view created services
+
+$ kubectl get services
+
+now access the service using curl
+
+
+curl http://192.168.1.2:30008
+
+
+
+. what you do when you have multiple pod
+
+. in production enviroment you have multiple instances for high availability and load balancing purposes
+
+. we same labels during create the service
+
+. when service created looks for matching pod 
+
+. then service automatically select pod to forward external request
+
+. you don't have to do anyadditional configuration 
+
+. random algorithm used to balance the load
+
+. pod running on different node service automatically map to nodeport we can access using same nodeip and port
+
+
+
+            
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
     
 
 

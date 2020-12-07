@@ -790,6 +790,270 @@ Access url in the browser
 -------------------------
 
 http://172.17.0.3:30004
+------------------------------------------
+
+
+15.10.2020
+==========
+
+clusterip
+---------
+
+
+vim service-definition.yaml
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: back-end
+spec:
+  type: ClusterIP
+  ports:
+   - targetPort: 80
+     port: 80
+  selector:
+    app: myapp
+    type: back-end 
+
+
+save and exit
+
+$ kubectl create -f service-defintion.yaml
+
+$ kubectl get services
+
+-------------------------------------------------------------------------------------------
+
+07.12.2020
+==========
+
+we going to deploy voting application on minikube cluster
+
+** create new project folder called voting app **
+
+# mkdir voting-app
+
+# cd voting-app
+
+** create pod defintion file with in application **
+
+vim voting-app-pod.yaml
+
+apiVersion: v1
+kind: Pod
+metadata: 
+  name: voting-app-pod
+  labels:
+    name: voting-app-pod
+    app: demo-voting-app
+spec:
+  containers:
+    - name: voting-app
+      image: kodekloud/examplevotingapp_vote:v1
+      ports:
+        - containerPort: 80
+        
+
+** save and exit **
+
+vim result-app-pod.yaml
+
+apiVersion: v1
+kind: Pod
+metadata: 
+  name: result-app-pod
+  labels:
+    name: result-app-pod
+    app: demo-voting-app
+spec:
+  containers:
+    - name: result-app
+      image: kodekloud/examplevotingapp_result:v1
+      ports:
+        - containerPort: 80
+
+** save and exit **
+
+
+vim redis-pod.yaml
+
+apiVersion: v1
+kind: Pod
+metadata: 
+  name: redis-pod
+  labels:
+    name: redis-pod
+    app: demo-voting-app
+spec:
+  containers:
+    - name: redis
+      image: redis 
+      ports:
+        - containerPort: 6379
+        
+** save and exit **
+
+vim postgres-pod.yaml
+
+apiVersion: v1
+kind: Pod
+metadata: 
+  name: postgres-pod
+  labels:
+    name: postgres-pod
+    app: demo-voting-app
+spec:
+  containers:
+    - name: postgres
+      image: postgres
+      ports:
+        - containerPort: 5432
+      env:
+        - name: POSTGRES_USER
+          value: "postgres"
+        - name: POSTGRES_PASSWORD
+          value: "postgres"     
+
+** save and exit **
+
+vim worker-pod.yaml
+
+apiVersion: v1
+kind: Pod
+metadata: 
+  name: worker-app-pod
+  labels:
+    name: worker-app-pod
+    app: demo-voting-app
+spec:
+  containers:
+    - name: worker-app
+      image: kodekloud/examplevotingapp_worker:v1
+      
+** save and exit **
+
+
+
+now create service files
+========================
+
+vim voting-app-service.yaml
+
+apiVersion: v1
+kind: Service
+metadata: 
+  name: voting-service
+  labels:
+    name: voting-service
+    app: demo-voting-app
+spec:
+  type: NodePort
+  ports:
+    - port: 80
+      targetPort: 80
+      nodePort: 30004
+  selector:
+    name: voting-app-pod
+    app: demo-voting-app
+
+
+** file completed ***
+
+
+vim result-app-service.yaml
+
+apiVersion: v1
+kind: Service
+metadata: 
+  name: result-service
+  labels:
+    name: result-service
+    app: demo-voting-app
+spec:
+  type: NodePort
+  ports:
+    - port: 80
+      targetPort: 80
+      nodePort: 30005
+  selector:
+    name: result-app-pod
+    app: demo-voting-app
+
+
+** file completed **
+
+vim redis-service.yaml
+
+apiVersion: v1
+kind: Service
+metadata: 
+  name: redis
+  labels:
+    name: redis-service
+    app: demo-voting-app
+spec:
+  ports:
+    - port: 6379
+      targetPort: 6379
+  selector:
+    name: redis-pod
+    app: demo-voting-app
+
+
+** file completed **
+
+vim postgres-service.yaml
+
+apiVersion: v1
+kind: Service
+metadata: 
+  name: db
+  labels:
+    name: postgres-service
+    app: demo-voting-app
+spec:
+  ports:
+    - port: 5432
+      targetPort: 5432
+  selector:
+    name: postgres-pod
+    app: demo-voting-app
+
+** file completed **
+
+
+
+
+
+
+
+
+** create pods and service using kubectl **
+
+kubectl create -f voting-app-pod.yaml
+
+kubectl create -f voting-app-service.yaml
+
+
+** like above create all pod and services **
+
+** view pods and services **
+
+# kubectl get pods,svc
+
+
+** view url of services **
+
+# minikube service voting-service --url
+
+
+# minikube service result-service --url
+
+
+----------------------------------------------------------------------------------------------------------
+
+
+
 
  
 

@@ -1080,6 +1080,210 @@ curl http://192.168.1.2:30008
 . pod running on different node service automatically map to nodeport we can access using same nodeip and port
 
 
+13.10.2020
+==========
+
+kubernetes-clusterip
+--------------------
+
+. full stack web application typically different types of pods
+
+. number of pods running frontend webserver
+
+. set of pods running on backend server
+
+. group of pod running key value store like redis database
+
+. the web frontend server need to communicate with backend server
+
+. the backend server need to communicate with databases as well as redis 
+
+. so what is right way to estabilish connectivity between these services
+
+. so pods assgined ip address is not static, so we can't relay internal ip addresses
+
+. kubernetes service can help us group the pod together and provide single interface this type of service known as cluster ip
+
+
+17.10.2020
+==========
+
+kubernetes load-balancer
+------------------------
+
+When creating a service, you have the option of automatically creating a cloud network load balancer. This provides an externally-accessible IP address that sends traffic to the correct port on your cluster nodes provided your cluster runs in a supported environment and is configured with the correct cloud load balancer provider package
+
+
+You need to have a Kubernetes cluster, and the kubectl command-line tool must be configured to communicate with your cluster. If you do not already have a cluster, you can create one by using Minikube, or you can use one of these Kubernetes playgrounds
+
+
+30.10.2020
+==========
+
+difference between containers and Microservices
+-----------------------------------------------
+Containers are easily packaged, lightweight and designed to run anywhere. Multiple containers can be deployed in a single VM. A microservice is an application with a single function, such as routing network traffic, making an online payment or analysing a medical result.
+
+
+
+Microservices 
+-------------
+- also known as the microservice architecture - is an architectural style that structures an application as a collection of services that are. Highly maintainable and testable. Loosely coupled. Independently deployable. Organized around business capabilities
+
+
+
+Advantages of microservices
+---------------------------
+
+    Improved fault isolation: Larger applications can remain mostly unaffected by the failure of a single module.
+    Eliminate vendor or technology lock-in: Microservices provide the flexibility to try out a new technology stack on an individual service as needed.
+
+01.11.2020
+==========
+
+microservices
+-------------
+
+. this lecture we try and understand microservices architecture using simple web application
+
+. we deploy web appication on multiple different kubernetes platform such as gcp aws azure
+
+. here we going to use simple application developed by docker demonsrate various feature available
+
+. this sample voting application which provide interface to user and another interface to result
+
+. application consist various cpmponent
+
+
+voting app - python
+        ||
+in memeory db - redis
+        ||
+worker - .net
+        ||
+database - postgresql
+        ||
+result-app - nodejs
+
+
+. postgresql read the count of votes 
+
+. this voting application has different services different development tool and diffrernt platform 
+     
+. make sure all application databases already build and available in dockerhub
+
+. start with datalayer
+
+$ docker run -d --name=redis redis
+
+-d = run container in background
+
+naming the container is important
+
+run database
+------------
+
+$ docker run -d --name=db postgresql:9.4
+
+now start with application services
+----------------------------------
+
+$ docker run -d --name=vote -p 5000:80 --link redis:redis voting-app
+
+$ docker run -d --name=result -p 5001:80  --link db:db result-app
+
+we expose port 5000 an host system
+
+run worker image
+---------------
+
+$ docker run -d --name=worker --link redis:redis --link db:db worker
+
+
+two link two container we are using --link parameter in docker 
+
+create entry on /etc/host on voting app container  with internal ip of redis container
+
+02.11.2020
+==========
+
+. how to deploy voting app in kubernetes
+
+Goals
+-----
+
+1. Deploy containers
+
+2. Enable conectivity between the containers application access each other
+
+3. Enable external access for external facing application so user can access throuh web browser
+
+. we know we can't deploy container directly in kubernetes
+
+. create smallest object on kubernetes cluster and we must deploy application as podw
+
+. we could deploy  replicasets
+
+. once pod deployed enable connectivity between services
+
+. it's important to know what the connectivity require
+
+. we know redis database acceess by voting app and worker app
+
+. voting app says vote to redis database  and worker app read data from redis database
+
+. postgresql access by worker app also access by result app to read number votes
+
+. voting app accessd by external user and result app also accessed by external user to view the result
+
+. most of the compontent are being accessed by another component except worker app
+
+. worker app not being accessed by anyone
+
+.worker app read data from redis database and update to postgresql db
+
+. python webserver listening on 80 result app nodejs 
+
+. redis service listen on port 6379
+
+. postgres listen on 5432
+
+. the worker app has no service because it's just worker not accessed by anyone
+
+. ip of pod is changed when it's restart
+
+. when scale your in future is to use service
+
+. service can be expose the application to external access 
+
+. create service (cluster ip)
+   . redis
+   . important to name as service
+
+. these services not accessible to outside cluster
+
+. create service (Nodeport)
+   . voting-app
+   . result-app
+
+
+. 
+
+. 
+
+  
+
+
+
+
+
+
+
+
+
+ 
+
+
 
             
 
@@ -1088,6 +1292,7 @@ curl http://192.168.1.2:30008
 
 
  
+
 
 
 

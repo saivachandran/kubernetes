@@ -1053,6 +1053,226 @@ kubectl create -f voting-app-service.yaml
 ----------------------------------------------------------------------------------------------------------
 
 
+Deploying applicatioon as deployment
+
+====================================
+
+** deploying application as pod doesn't help scale our application **
+
+** if you update application your application will down to overcome this we using deployment **
+
+** Deployment automatically create replica sets it can perform rolling update, rollback, record revision, record cause of change **
+
+** Deployment automatically create replicaset **
+
+
+
+craete deploy files
+===================
+
+vim voting-app-deploy.yaml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata: 
+  name: voting-app-deploy
+  labels:
+    name: voting-app-deploy
+    app: demo-voting-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: voting-app-pod
+      app: demo-voting-app
+
+  template:
+    metadata: 
+      name: voting-app-pod
+      labels:
+        name: voting-app-pod
+        app: demo-voting-app
+    spec:
+      containers:
+        - name: voting-app
+          image: kodekloud/examplevotingapp_vote:v1
+          ports:
+            - containerPort: 80
+            
+
+-------------------------------------------
+
+vim result-app-deploy.yaml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata: 
+  name: result-app-deploy
+  labels:
+    name: result-app-deploy
+    app: demo-voting-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: result-app-pod
+      app: demo-voting-app
+
+  template:
+    metadata: 
+      name: result-app-pod
+      labels:
+        name: result-app-pod
+        app: demo-voting-app
+    spec:
+      containers:
+        - name: result-app
+          image: kodekloud/examplevotingapp_result:v1
+          ports:
+            - containerPort: 80
+
+-------------------------------------------------
+
+vim redis-deploy.yaml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata: 
+  name: redis-deploy
+  labels:
+    name: redis-deploy
+    app: demo-voting-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: redis-pod
+      app: demo-voting-app
+
+  template:
+    metadata: 
+      name: redis-pod
+      labels:
+        name: redis-pod
+        app: demo-voting-app
+    spec:
+      containers:
+        - name: redis
+          image: redis 
+          ports:
+            - containerPort: 6379
+            
+
+--------------------------------------------
+
+vim postgres-deploy.yaml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata: 
+  name: postgres-deploy
+  labels:
+    name: postgres-deploy
+    app: demo-voting-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: postgres-pod
+      app: demo-voting-app
+
+  template:
+    metadata: 
+      name: postgres-pod
+      labels:
+        name: postgres-pod
+        app: demo-voting-app
+    spec:
+      containers:
+        - name: postgres
+          image: postgres
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              value: "postgres"
+            - name: POSTGRES_PASSWORD
+              value: "postgres"     
+
+-----------------------------------------------
+
+vim worker-app-deploy.yaml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata: 
+  name: worker-app-deploy
+  labels:
+    name: worker-app-deploy
+    app: demo-voting-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: worker-app-pod
+      app: demo-voting-app
+
+  template:
+    metadata: 
+      name: worker-app-pod
+      labels:
+        name: worker-app-pod
+        app: demo-voting-app
+    spec:
+      containers:
+        - name: worker-app
+          image: kodekloud/examplevotingapp_worker:v1
+          
+----------------------------------------------------------
+
+** create deploy and services **
+
+# kubectl create -f voting-app-deploy.yaml
+
+# kubectl create -f voting-app-service.yaml
+
+** like above create remaining all deploy and services **
+
+** view deployment and sservices **
+
+# kubectl get deployment
+
+# kubectl get pods,svc
+
+
+** view url of minikube **
+
+# minikube service voting-service --url
+
+# minikube service result-service --url
+
+
+** scale our application **
+
+kubectl scale deployment voting-app-deploy --replicas=3
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+ 
+
+
+
+
 
 
  

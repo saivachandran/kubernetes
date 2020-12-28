@@ -308,6 +308,42 @@ Delete pod
 
 $ kubectl delete -f pod.yml
 
+19.12.2020
+==========
+
+vim repcontroller.yaml
+
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: myapp-rc
+  labels:
+    name: myapp
+    type: front-end
+
+spec:
+  template:
+    
+    metadata: 
+      name: web
+      labels:
+        name: web
+        tier: front-end
+    spec:
+      containers:   
+        - name: nginx
+          image: nginx
+  replicas: 3      
+      
+
+$ kubectl create -f rc-defintion.yaml
+
+$ kubectl get replicationcontroller
+
+$ kubectl get pods
+
+$ 
+
 
 27.08.2020
 ==========
@@ -319,7 +355,7 @@ Here we are going to create replicaset based on pod definition file
 create directory called replicaset under directory create replicaset.yaml file
 
 
-vim reolicset.yaml
+vim replicset.yaml
 
 
 apiVersion: apps/v1
@@ -389,6 +425,37 @@ view detailed information about replicaset
 -----------------------------------------
 
 $ kubectl describe replicaset myapp-replicaset
+
+scale replicaset
+================
+
+edit repicaset-drfintion file change change number of pod 2 to 4
+
+$ kubectl replace -f replicaset-definition.yaml
+
+
+without edit yaml file we can scale the replicaset
+
+$ kubectl scale --replicas=4 -f replicaset-definition.yaml
+
+
+with name we can scale replicas
+
+$ kubectl scale --replicas=4 replicaset myapp-replicaset 
+
+scale replicaset
+================
+
+using below command scale number of replicas
+
+$ kubectl edit replicaset myapp-replicaset
+
+
+$ kubectl get pods
+
+
+$ kubectl scale replicaset myapp-replicaset --replicas=2
+
 
 
 
@@ -674,8 +741,7 @@ $ kubectl rollout history deployment myapp-deployment
 $ kubectl describe deployment myapp-deployment
 
 
-
-mae another change
+ another change
 -------------------
 
 $ kubectl edit deployment myapp-deployment --record
@@ -821,6 +887,39 @@ save and exit
 $ kubectl create -f service-defintion.yaml
 
 $ kubectl get services
+
+
+load balancer
+============
+
+vim loadbalancer.yaml
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-service
+spec:
+  type: LoadBalancer
+  ports:
+    - targetPort: 80
+      port: 80
+      nodePort: 30008
+  selector:
+         
+    app: myapp
+    type: front-end
+
+
+
+$ kubectl create -f loadbalancer.yaml
+
+$ kubectl get svc
+
+$ minikube service my-service --url
+
+
+http://172.17.0.2:30008/
+
 
 -------------------------------------------------------------------------------------------
 
@@ -1255,6 +1354,11 @@ spec:
 ** scale our application **
 
 kubectl scale deployment voting-app-deploy --replicas=3
+
+scale down
+==========
+
+kubectl scale deployment voting-app-deploy --replicas=2
 
 
 

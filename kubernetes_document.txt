@@ -1,3 +1,24 @@
+kubernetes course series
+========================
+
+** kubernetes is most trending technology in cloud computing it supports any cloud platform
+
+kubernetes course series
+========================
+
+1. kuernetes for absolute beginner
+
+2. certified kubernetes Administrator
+
+3. certified kubernetes application developer
+
+
+** if your administrator learn 1st and 2nd 
+
+** if you r developer learn 1st and 3rd
+
+
+
 What is kubernetes
 ==================
 Kubernetes is an open-source container-orchestration system for automating computer application deployment, scaling, and management. It was originally designed by Google and is now maintained by the Cloud Native Computing Foundation. Wikipedia
@@ -36,7 +57,34 @@ Key feature of kubernets
     Offers environment consistency for development, testing, and production 
 
 
-Key feature of coe (Kubernets orchestration engine)
+kubernetes concepts
+===================
+1. Overview
+
+2. Cluster Architecture
+
+3. Containers
+
+4. Workloads
+
+5. Services, Load Balancing, and Networking
+
+6. Storage
+
+7. Configuration
+
+8. Security
+
+9. Policies
+
+10. Scheduling and Eviction
+
+11. Cluster Administration
+
+12. Extending Kubernetes
+
+
+Key feature of code (Kubernets orchestration engine)
 ===================================================
 
 1. clustering
@@ -87,6 +135,35 @@ Course Objectives
 9. Kubernets on cloud - aws/Gcp
 
 
+What is Kubernetes
+==================
+
+Kubernetes is a portable, extensible, open-source platform for managing containerized workloads and services, that facilitates both declarative configuration and automation. It has a large, rapidly growing ecosystem. Kubernetes services, support, and tools are widely available.
+
+
+Kubernetes Components
+=====================
+
+A Kubernetes cluster consists of the components that represent the control plane and a set of machines called nodes.
+
+
+Kubernetes control plane
+=======================
+
+A Kubernetes control plane component that embeds cloud-specific control logic. The cloud controller manager lets you link your cluster into your cloud provider's API, and separates out the components that interact with that cloud platform from components that just interact with your cluster
+
+
+The Kubernetes API
+==================
+
+The Kubernetes API lets you query and manipulate the state of objects in Kubernetes. The core of Kubernetes' control plane is the API server and the HTTP API that it exposes. Users, the different parts of your cluster, and external components all communicate with one another through the API server.
+
+
+Working with Kubernetes Objects
+===============================
+
+Kubernetes objects are persistent entities in the Kubernetes system. Kubernetes uses these entities to represent the state of your cluster. Learn about the Kubernetes object model and how to work with these objects.
+
 
 container orchestration
 =======================
@@ -108,8 +185,35 @@ when load increases kubernetes launch new instances
 
 when we run out of hardware scale up the number of nodes without down the application
 
+
 24.07.2020
 ----------
+
+what is container
+================
+
+container completely isolated enviroment, container have own process, network,mount it's share host os kernal 
+
+docker is lxc container 
+
+eariler said docker container share the underline kernal what's that mean
+
+install docker on ubuntu os any flavour of os can install top of docker in linux 
+
+windows not share same kernal on docker 
+
+main purpose of docker containerized application shift and run 
+
+
+docker image
+============
+
+image is package or template
+
+container
+=========
+
+container running instances of images, container have own enviroment and set of process and network, mount
 
 kubernets Architecture
 ======================
@@ -128,7 +232,7 @@ cluster is set of nodes group together, if one node fail your application still 
 
 Master responsible for managing cluster,  information of the cluster members stored in the master 
 
-master is a another kubernets installed in it 
+master is a another node kubernets installed in it 
 
 
 kubernets components
@@ -185,7 +289,7 @@ master vs worker
 
 so far we see two types of server master and worker 
 
-how does one serer as master another one as a slave 
+how does one server as master another one as a slave 
 
 worker node aslo known as minions as container hosted to run docker container need to runtime install 	
 
@@ -588,7 +692,7 @@ user no longer able to access our appplication, to prevent user lost access our 
 that way if one fail still our application runs on another one	
 
 
-replication controller helps to run multiple instance on single pod in the kubernetes cluster does providing high availability
+replication controller helps to run multiple instance on single node in the kubernetes cluster does providing high availability
 
 Even if you have single pod, replication controller can help automatically bring up new pod when existing one fail
 
@@ -945,7 +1049,7 @@ kubernetes need network solution cisco aci network, clilium, flannel, nsx, calic
 kubernetes services
 ------------------
 
-. kubernetes services enable communication between various compontents within ouside of application
+. kubernetes services enable communication between various compontents within node and ouside of application
 
 . kubernetes services us connect application together with other application or user
 

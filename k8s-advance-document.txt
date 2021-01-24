@@ -1,0 +1,1005 @@
+kubernetes certified Administrator
+=================================
+
+28.12.2020
+==========
+
+course introduction
+------------------
+
+pre-requisties
+--------------
+
+1. docker
+
+2. basic kubernetes
+
+  . pod
+  . Deployments
+  . services
+
+3. yaml
+
+4. setting basic of vm
+
+
+
+course objective
+----------------
+
+1.cluster architecture
+
+2. Api primitives
+
+3. services and other network primitives 	 	
+
+4. scheduling
+
+  . labels & selector
+  . Daemon sets
+  . Resuorce limits
+  . multiple schedulers
+  . Manual scheduling
+  . scheduler Events
+  . configure Kubernetes scheduler
+
+4. logging monitoring
+
+   . Monitor cluster components
+   . Monitor cluster component logs
+   . Monitor Applications
+   . Applications Logs
+
+5. Application Life cycle management
+
+   . Rolling updates and rollbacks in Deploy
+   . configure Applications
+   . scale Applications
+   . self-healing applications
+6. cluster maintenance
+
+   . cluster upgrade process
+   . operting system upgrades
+   . backup nad restore methodlogy
+
+7. security
+   
+   . Authendication and Autherization
+   . kubernetes securities
+   . Network Policies
+   . Tls certicates and cluster components
+   . images securly
+   . secure contexts
+   . secure persistence value store
+
+8. storage
+
+  . Persistent Volume
+  . Access Modes of volumes
+  . Persistent Volume claim
+  . Kubernetes storage object
+  . configure application with persistence volumes
+
+9. Networking
+   . pre-requisties Network switching routing tools
+   .  pre-requisties Dns and core Dns
+   . Network configuring on cluster nodes
+   . Pod Networking concepts
+   . service Networking
+   . Network Load balancer
+   . ingres
+   . Network Namespace
+   . bridge networks
+   . core dns
+   . cni
+   . networking docker
+
+10. installation configuration and validation
+
+   . Design a kubernetes cluster
+   . secure kubernetes communication
+   . provision infrastructure
+   . install kubernetes master and nodes 
+   . HA kubernetes Cluster
+   . choose Network solution
+   . Node end to end tests
+   . Run and Analyze end to end test
+
+11. trouble shooting
+
+   . Application failure
+   . control plane failure
+   . Worker Node failure
+   . Networking
+
+  
+
+Kubernetes certifications
+========================
+
+As per recent survey kubernetes fastest grow in recent job search
+
+kubernetes certified administrator developed by cloud native computing foundation 
+
+collabration by linux foundation
+
+
+To read more about certication visit below website
+
+https://www.cncf.io/certification/cka/
+
+exam cost 300 us dollar one retake option with in 12 months
+
+
+Requirement need to met
+-----------------------
+to check enviroment to attend exam  system requirement and network connectivity
+
+Handbook available in certification website
+
+unlike other certication kubernetes not a multiple choices exam
+
+it's performance based exam to test your handson skills on kubernetes
+
+you need to know hoe technogy work and how you going to work
+
+3 hours time for exam	
+
+we refer kubernetes official document during exam 
+
+
+
+30.12.2020
+==========
+
+kubernetes architecture
+=======================
+
+** we start with basic overview of kubernetes cluster
+
+** first we look at architecture at high level and drill down each component one by one
+
+Cluster Archticture
+-------------------
+
+  . ETCD for beginners
+  . ETCD in kubernetes
+  . Kube API server
+  . controller Mananger
+  . kube scheduler
+  . kubelet
+  . kube proxy
+
+
+** we are going to use ships to anaylsis archicture  of kubernetes
+
+** purpose of kubernetes is host your application in the form of containers
+
+** Easily deploy many instances of your applications its require enable communications between different services
+
+** so many things involve work together it's possible
+
+** we have two kind of ships cargo ships actual work carring container
+
+** controller ships resposible managing and monitoring gargo ships
+
+** kubernetes cluster consist of set of nodes physical , virtual, on permises, cloud
+
+** worker nodes is responsible for load container in the ships
+
+** somebody need to load container not just load plan how to load, identify the rigt ships, store information about ships, track the location of the continer on the ships this is done by controll ships
+
+** controll ships will lay to master node in the kubernetes cluster
+
+** master node managing kubernetes cluster, storing inforation regarding different nodes, montoring nodes, master node done all of these using control plane component 
+
+** many container loaded and unloaded in daily basis so need to maintain information what container on which ships, which time it's loaded etc
+
+** all of this stored highly available key value stored called ETCD cluster 
+
+** ETCD is a database store inforation in key value format
+
+** kube-scheduler in kubernetes cluster identify the right node to place a container, resuorce requirments, worker node capacity or any other policies
+
+
+controller available in kubernetes 
+---------------------------------
+
+. Node-controller take care of nodes on borading new node on the cluster, node become unavailable, destroy node
+
+. replication controller take care of desire of container on cluster 
+
+. how to communicate each other 
+
+. kube-api server primary management component of kubernetes it's responsible all operation in the kubernetes cluster
+
+. kubernetes api server used by external user manage kuebrnetes, various controller kubernetes make nessesary changes in cluster
+
+. master node, networking solution, dns  all are deployed in container format 
+
+. container run time engine popular one docker 
+
+. kubernetes supports other runtime engine like conatinerd or rockit
+
+
+. Every gargo ships gas captain captain responsible for all activities in the ships
+
+. captain of kubernrtes in kubelet
+
+. kubelet is agent run each node on cluster listen instruction from kube-apiserver, deploy or destroy container on nodes
+
+. kube apiserver periodically fetches status report from kubelet montor status of nodes,containers
+
+. application running on worker node to communicate each other
+
+. web server ruuning on one container one node, db server running another conatiner another node
+
+. how web server reach db server on another node
+
+. communication between service with in the cluster enable by another component called kube-proxy
+
+
+31.12.2020
+==========
+
+ETCD introduction
+=================
+
+objectives
+---------
+
+1. what etcd
+
+2. what is key-value store
+
+3. How to get started quickly
+
+4. how to operate etcd
+
+later
+-----
+1. what distributed system
+
+2. How etcd operates
+
+3. raft protocol
+
+4. Best practice on number of nodes
+
+
+
+what is ETCD
+============
+
+it's disributed reliaible key value store that's simple secure and fast
+
+
+what is key-value store
+======================
+
+** databases in tabular format you hear about mysql and relational databases
+
+** store data form of rows and columns row represent person column represent type of information
+
+**  key value store information key and value format
+
+
+key   value
+
+name   saiva
+
+age    30
+
+** we can't have duplicate keys it's used to retrive small jungs of data such as configuration data
+
+
+install ETCD
+============
+
+1. Download binaries from github repo
+
+2. extract
+
+3. Run ETCD service
+
+ETCd port : 2379
+
+
+default client comes with ETCd controll client  ./etcdctl set key value
+
+
+etcd controll client it's command client for etcd 
+
+
+retrive information
+
+./etcdctl get key
+
+value
+
+to view more option ./etcdctl command without any option
+
+./etcdctl
+
+-------------------------------------------------------------------------------------------
+
+ETCD role in kubernetes
+=======================
+
+ETCD data store store information regarding cluster such as 
+
+1. nodes
+
+2. pods
+
+3. config
+
+4. secrets
+
+5. Accounts
+
+6. roles
+
+7. bindings
+
+6. others
+
+
+when you kubssl commands details get from ETCD cluster 
+
+you adding additional pod, replicasets,deployments all are updated in ETCD cluster
+
+depending on how you setup cluster ETCD deploy differently
+
+one deploy from scratch aother from kubeaadm tool
+
+
+later we stup cluster using scratch
+
+
+ETCD setup manual scratch
+========================
+
+wget https://github.com/etcd-io/etcd/releases/download/v3.4.14/etcd-v3.4.14-linux-amd64.tar.gz
+
+we have whole section on tls certicate other section for configuration
+
+etcd.service
+
+notice advertise client url
+
+listen on server ip and port 2379
+
+
+setup using kubeadm
+===================
+
+kubeadm deploy etcd as pod kube-system
+
+$ kubectl get pods kube-system
+
+$ kubectl exec etcd-master -n kube-system etcdctl get / --prefix -keys-only
+
+
+kubernetes store data in specific directory under root dirctory have registry 	
+
+Registry
+
+  minions
+  pods
+  replicasets
+  deployments
+  roles
+  secrets
+
+
+ETCD HA Enviroment
+=================
+
+High availability enviroment you have multiple master node 
+
+multible etcd instances cross the maximum nodes
+
+ETCD instances know about each other set correct parameter etcd service configuration
+
+initial cluster options set different service options
+
+-----------------------------------------------------------------------------------------------------
+02.01.2021
+==========
+
+kube-api-server in kubernetes
+============================
+
+. kube-api-server is primary management component in kubernetes
+
+. when you run kubectl command kube controll utility reach kube-api-server
+
+. kube-api-server first authendicate request and validate
+
+. retrive data from etcd cluster response back with requested information
+
+. instead you can send api post request directly api create pod object without assging to node
+
+.  update information in the etcd server and update information to user the pod is created 
+
+. the scheduler continously monitor the api server there is new pod with no node assign 
+
+. schedluer identify the right node to place the new node on and communicate tahe back to api-server
+
+. api server update the information in the etcd cluster
+
+. then api-server update to kubelet in the appropriate worker node
+
+. kubelet create pod in the node and instruct container run time engine to deploy application
+
+. once done kubelet update to api server
+
+. api-server then update to etcd cluster
+
+. every time the change is requested kube-api-server centre of all different tasks. tasks need to perform change in the cluster
+
+. kube-api-server responsible authendicating and validating, retriving, updating datastore 	
+
+. kube-api-server is only component directly intract with etcd datastore
+
+. other compontent schdeuler, kubelet, kubecontrol manager  uses the api server update in the cluster to perform updates in the cluster their 
+
+respective areas
+
+
+
+. view api-server options- kubeadm 
+
+cat /etc/kubernetes/manifests/kube-apiserver.yaml
+
+
+. non kueadm setup
+
+cat /etc/systemd/system/kube-apiserver.service
+
+. also see the running process
+
+ps -aux | grep kube-apiserver
+
+
+02.01.2021
+==========
+
+kube-controller-Manager
+======================
+
+. kube controller manager controll various controller in kubernetes
+
+. controller is office or department in ships that have own responsibilities
+
+. office for the ships monitoring and take necessary actions manage the container on the ships
+
+
+kubernetes controller
+====================
+
+. controller is process contiously monitor the state of the various component 
+
+. work towards the desire functions of all components
+
+
+Node controller
+--------------
+
+. Node controller responsible monitor the state of the node take nessacery action keep application running
+
+. node controller check status of the node via apiserver
+
+. Node controller check the status node every 5 seconds that way node controller can monitor the health of the nodes
+
+$ kubectl get nodes
+
+. if stop receving heart beat from node marked as node is unreachable
+
+. but wait 40 secs before mark unreachable
+
+. afetr mark unreachable node have 5 mins to come back
+
+. pod not up with in 5 mins node controller remove that pod assign new pod to healthy node
+
+
+Replication controller
+=====================
+
+. it's responsible for monitor the status of replicaset ensure desire number of pod available all time
+
+. if pod dies it create another one
+
+. those two example of controller many more such a controller available in kubernetes
+
+
+3. Deployment controller
+
+4. Namespce controller
+
+5. Endpoint controller
+
+6. Service-Account-controller
+
+7. pv-protection-controller
+
+8. pv-Binder-controller
+
+9. cron job
+
+10. job controller
+
+11. replicaset
+
+12. stateful-set
+
+
+all controller packages in to single process known as kubernetes controller manager
+
+. install kubernetes controller manager different controller install as well
+
+
+. download kube-controller manager from kubernetes release page and install run it as a service
+
+
+how to view kube-controller managerserver option - kubeadm
+----------------------------------------------------------
+
+$ kubectl get pods -n kube-system
+
+$ cat /etc/kubernetes/manifests/kube-controller-manager.yaml
+
+
+non kubeadmin setup
+------------------
+
+$ cat /etc/systemd/system/kube-controller-manager.service
+
+
+also see the running process
+
+ps -aux | grep 	kube-controller-manager
+
+-------------------------------------------------------------------------------------------------
+04.01.2020
+==========
+
+kube scheduler
+=============
+
+. kubernetes scheduler responsible for scheduling pod on right node
+
+. scheduler only decide which pod goes which node
+
+. it doesn't actually place the pod on the node, place the pod on the node done is by kubelet
+
+. kubelet are the captain on the ships who creates the pod, scheduler only decide which pod goes where
+
+
+*** how schedluer does that in bit more details
+
+. why do we need scheduler
+
+. we have many container and many ships, scheduler select right container on right ships
+
+. we have different sizes of container and we need right capacity ships to accomidate that container
+
+
+. in kubernetes scheduler decide which node pod placed on depends on certain cretieria
+
+. we may have pods different resource requirement, nodes in the cluster dedicated to certain applications, how to scheduler assign this pod
+
+. scheduler looks each pod and try to find best node for it
+
+. we look one pod it has set of cpu and memeory requirement
+
+. we have two phases to identify the best node of the pod
+
+   1. filer the pod
+
+     . filer out the node the do not fit the pod profile
+     . node don't have sufficient cpu and memory rquested by pod are removed, now have two nodes which pods can be placed
+     . how scheduler pick one from two 
+
+   2. Rank nodes
+
+      . scheduler rank the nodes to identify the best feet for the pod assign the score from 0 to 10 with priority function
+      . schedluer calculate amount of free resource after place the pod, high cpu free is got selected 
+
+
+. resource requirements and limits
+
+. Taints and tolerations
+
+. Node selector/Affinity
+
+
+How you install kube scheduler as a service
+
+. download binaries from kubernetes schedluer and extract install 
+
+How you view kube scheduler option
+
+  . cat /etc/kubernetes/manifests/kube-scheduler.yaml
+
+view running process
+
+$ ps -aux | grep kube-scheduler
+
+-----------------------------------------------------------------------------------------------------------
+
+Kubelet
+======
+
+** kubelet is like a captain on the ships, kubelet lead all activity on the ships
+
+** they once responsible for all paperwork being part of the cluster
+
+** they load and unload conatiner on the ships
+
+. kubelet in the kubernet worker node register node with kubernetes cluster
+
+. when it receive load a container or pod on the node, it request container runtime engine docker pull image and create instance
+
+. kubelet contionusly monitor the state of the pod and node
+
+. report the kube-apiserver timely based
+
+
+how do you install kubelet
+
+. if you use kubeadm tool to deploy a cluster  kubeadm not automaticaly deploy kubelet
+
+. you msust manually install on your worker node
+
+download installer extract it install as a service
+
+you can running process of kubelet
+
+ps -aux | grep kubelet
+
+-----------------------------------------------------------------------------------------
+
+Kube-proxy
+================
+. kube-proxy is a network proxy that runs on each node in your cluster, implementing part of the Kubernetes Service concept. kube-proxy maintains network rules on nodes. These network rules allow network communication to your Pods from network sessions inside or outside of your cluster
+
+. within kubernetes cluster every pod can reach another pod but this complexed by deploying pod networking solution
+
+. pod network is a internal virtual network to across all node in the cluster to all pods connected throug this they able to communicate
+
+each other
+
+. many solution available deploying such a network
+
+. this case have a web application deployed on first node, database application deployed on second
+
+. webapp can reach database using ip of the pod, there is no guaranty ip of the pod remain same
+
+. beginer course we use services access database using name of the service db 
+
+. service also get an ip address, whenever pod tries to reach service using it's ip forward traffic to backend pod this case the database
+
+. what is service how does get an ip, service can't join pod network, because service not an actual thing
+
+. it's not a container like pod it doesn't have any interfaces or actively listening process, it's virtual component only listen kubernetes memeory
+
+. service is accessible across cluster from any node, so how that acheived here kube-proxy comes in
+
+kube-proxy 
+---------
+
+. kube-proxy is a process running on each node in the kubernetes cluster
+
+. it's job look for new services, every time new services created it's create appropriate rule on each node forward traffic to services to the
+
+backend pod
+ 
+. one way does this using ip tables, it create ip tables rules each node on the cluster to forward traffic heading to the ip thats how kubeproxy
+
+configure service
+
+how to install kube-proxy
+
+download kubeproxy binary from kubernetes release page extract it run it as a service
+
+. kubeadm tool deploy kube-proxy as a pod infact it's deployed as daemon set
+
+-----------------------------------------------------------------------------------------------------------
+
+06.01.2020
+==========
+
+Pod Recap
+=========
+
+. Assume application already developed and build into docker images available in dockhub public repository
+
+. kubernetes can pull it down, also assume kubernetes cluster alreadt set up and it's working 
+
+. this could be single node setup or multinode setup doesn't matter services need to be running state
+
+. already discuss kubernetes ultimate aim deploy application in a container format on a set of machines there a worker node in a cluster
+
+. however kubernetes doesn't deploy container directly on the worker node
+
+. container are encapsulated in to kubernetes object called pods
+
+. pod is a single instance of the application, pod is smallest object that you can create in kubernetes
+
+
+ Here we see single node kubernetes cluster with a single instance of your appllication in single docker container encapsulated with  pod
+
+  . if the number of user accessing you application increases need to scale your application
+ 
+  . need to add additional instances for your web applications to share the load
+
+  . where we spinup new instances bring new container with in pod no, new bring new pod with new instances of application on same node
+
+  . if user further increase current node don't have sufficient capacity, kubernetes deploy new pod on another node, node should be added in cluster to expand physical capacity 
+
+  . pod have one to one relatinships container running in your applications
+
+  . scale up you create new pod to scale down delete existing pod
+
+
+ Multicontainer pod
+  
+ . pod have multiple containers
+
+ . sometime we need helper container processing user end data , handling file uploaded by user etc, that case you two containers part of the same pod
+
+  . two containers easily share same network namspace and storage volumes
+
+
+how to deploy pod
+
+   $ kubectl run nginx --image=nginx
+
+. kubect command does deploying docker container by creating pod, create pod automatically deploy nginx docker image automatically 
+
+. where we get application image from docker hub repository , dockerhub is a public repository various images and applications stored
+
+
+view list of pods
+
+$ kubectl get pods
+
+--------------------------------------------------------------------------------------
+
+07.08.2020
+==========
+
+Pod with yaml
+=============
+
+. Here we see creating pod using yaml facing configuration 
+
+. kubernetes uses yaml file as input create object called pod,replicaset, Deployment,services,etc
+
+vim pod-defintion.yml
+
+apiVersion: v1
+
+kind: Pod
+
+metadata: 
+
+  name: myapp-pod
+  labels:
+    app: myapp
+    type: front-end
+
+spec:
+  containers:
+    name: nginx-container
+    image: nginx
+
+
+$ kubectl create -f pod-defintion.yml
+
+$ kubectl get pods
+
+$ kubect describe pod myapp-pod
+
+-------------------------------------------------------------------------------------------
+
+20.01.2021
+===========
+
+Recap Replicasets
+-----------------
+
+ we discuss about kubernetes controller
+ --------------------------------------
+
+. Controller brain behind the kubernetes, process monitor kubernetes object response accordingly, this topic we discuss about one controller 
+
+thats relication controller
+
+. so what is replica why do we need replication controller
+
+. go back first scenerio we running single pod for application some reasons our applications pods fail, users can't access applications
+
+. to prevent user lose access we would like to have more than one instances or pod running at the same time that way if one fail still our
+
+ application running at another one 
+
+. replication controller helps us run multiple instances of single pod cluster doses providing high availability
+
+. even single pod can help if existing pod fail, it bring new pod, replication controller ensure specified number of pod running all time
+
+. replication controller span across multible nodes, node don't sufficient resource, scale our application when demand increases
+
+
+. important to know replication controller and replicaset both have purpose
+
+. replication controller is a owner technology being replaced by replicasets
+
+. replicaset new recommended way to set replication there are minor differnece each of these works
+
+
+
+replication controller yaml file format
+---------------------------------------
+
+apiversion = apiversion specific what we creating, replication controller in kubernetes supports apiversion v1
+
+
+vim rc-definition.yaml
+
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: myapp-rc
+  labels:
+    name: myapp
+    type: front-end
+
+spec:
+  template:
+    
+    metadata: 
+      name: web
+      labels:
+      
+        name: web
+        tier: front-end
+    spec:
+      containers:   
+        - name: nginx
+          image: nginx
+  replicas: 3      
+      
+
+$ kubectl create -f rc-definition.yaml
+
+$ kubectl get rc
+
+$ kubectl get pods
+
+---------------------------------------------------------------------------------------
+
+vim replicaset-definition.yaml
+
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: myapp-replicaset
+  labels:
+    name: myapp
+    type: front-end
+
+spec:
+  template:
+    
+    metadata: 
+      name: myapp
+      labels:
+        name: myapp
+        tier: front-end
+    spec:
+      containers:   
+        - name: nginx-container
+          image: nginx
+  replicas: 3 
+  selector:
+    mathchlabels:
+      type: front-end
+
+
+$ kubectl create -f replicaset-definition.yaml
+
+$ kubectl get replicaset
+
+$ kubectl get pods
+
+
+scale replicasets
+-----------------
+
+1. update number of replicas in definition file change 3 to 6
+
+$ kubectl replace -f replicaset-definition.yaml
+
+$ kubectl scale --replicas=6 -f replicaset-definition.yaml
+
+$ kubectl scale --replicas=6  replicset myapp-replicaset
+
+
+commands
+--------
+
+$ kubectl create -f replicaset-definition.yaml
+
+$ kubectl get replicasets
+
+$ kubectl delete replicaset replicaset-definition.yaml
+
+$ kubectl replace -f replicaset-definition.yaml
+
+$ kubectl scale --replicas=6 replicaset myapp-replicaset
+
+
+-------------------------------------------------------------------------------------------------------
+
+
+
+ 
+
+
+
+
+
+
+
+
+     
+
+
+
+
+
+
+
+
+
+
+. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	
+
+
+
+
+	
+
+
+
+
+
+
+ 
+
+ 
+ 	 
+   
+   
+  
+
+
+

@@ -1,0 +1,275 @@
+08.01.2021
+==========
+
+Pod-recap
+=========
+
+vim pod-defintion.yml
+
+apiVersion: v1
+
+kind: Pod
+
+metadata:
+
+  name: myapp-pod
+  labels: 
+    app: myapp
+
+
+spec:
+  containers:
+    - name: nginx-container
+      image: nginx
+    
+    - name: redis-db
+      iamge: redis
+
+$ kubectl create -f pod-definition.yml
+
+$ kubectl get pods
+
+$ kubectl describe pod myapp-pod
+
+----------------------------------------------------------------------------------------------- 
+
+16.01.2020
+==========
+
+pod practice test in kode cloud
+===============================
+
+1. How many pods exist on the system
+
+worker node
+-----------
+
+kubectl get pods
+
+No resource found in default namespace
+
+so answer is 0
+
+2. create new pod with nginx image
+
+$ kubectl run nginx --image=nginx
+
+$ kubectl get pods
+
+click check
+
+
+3. How many created now
+
+$ kubectl get pods
+
+Answer is 4
+
+
+4. What is the image used to create new pod
+
+$ kubectl describe pod newpods-fj6kk | grep -i image 
+
+Answer is busybox
+
+5. which nodes pod are placed on 
+
+$ kubectl get pods -o wide
+
+Answer is Node01
+
+
+6. what image used create webapp pod
+
+$ kubectl describe pod webapp  | grep -i image
+
+
+Answer busybox and nginx
+
+
+7. what is state of the container agentx in the pod webapp
+
+
+$ kubect describe pod webapp | grep state
+
+Answer is waiting
+
+8. why do you think container agentx in pod webapp error
+
+$ kubectl describe pod webapp | grep -i error
+
+Ansswer image doesn't exist in docker hub
+
+
+9. what does ready column output in kubectl get pod command indicate
+
+Answer number of running conatiner on the pod
+
+10. Delete webapp pod
+
+$ kubectl delete pod webapp
+
+
+
+11. create new pod with name of redis image redis123
+
+$ kubectl run redis --image=redis123 --dry-run=client -o yaml > pod.yaml
+
+$ kubectl apply -f pod.yaml
+
+12. fix the the image name
+
+$ kubectl edit pod redis
+
+
+change image redis123 to redis
+
+
+-------------------------------------------------------------------------------------------------------
+
+24.01.2021
+==========
+
+recap-replicaset-practice-test in kodecloud
+-------------------------------------------
+
+1. how many pods exist on the system
+
+$ kubectl get pods
+
+No resource found in default namespace
+
+answer is 0
+
+
+2. how many replicaset exist on the system
+
+$ kubectl get replicasets
+
+no resource found on default namespace
+
+Asnwer is 0
+
+3. how about now? how many replicasets do you see
+
+$ kubectl get replicasets
+
+NAME              DESIRED     CURRENT    READY    AGE
+new-replica-set      4           4         0       5s
+
+answer is 1
+
+
+4. How many pods DESIRED in the new-replicasets
+
+answer is 4
+
+5. what is the image used to create pod in the replicaset
+
+
+6. what is image used to create pod in the replicaset
+
+$ kubectl describe replicaset new-replica-set | grep -i image
+
+image : busybox 777
+
+answer is busybox777
+
+
+7. how many pod in ready date in replicaset
+
+kubectl describe replicaset new-replica-set | grep -i running
+
+0 Running
+
+answer is 0
+
+8. why do you think pods are not ready
+
+
+$ kubectl describe pod new-replica-set-5t6we
+
+error image doesn't exist
+
+answer is busybox777 image not exist
+
+9. delete one of the pods in 4 pods
+
+$ kubectl delete pod new-replica-set-9ty45
+
+
+10. how many pod exist now
+
+answer is 4
+
+11. why still 4 pods running after delete one pod
+
+
+answer is Replicaset ensure desire number of pod running at all time
+
+12. create replicaset using defintion file replicaset-defintion-1.yaml
+
+
+version error
+
+edit file chnage version v1 to apps/v1
+
+
+$ kubectl apply -f replicaset-defintion-1.yaml
+
+relicaset-1 created
+
+13. create replicaset using defintion file replicaset-defintion-2.yaml
+
+
+label error error
+
+edit file chnage lable name nginx to frontend 
+
+
+$ kubectl apply -f replicaset-defintion-2.yaml
+
+relicaset-2 created
+
+14. delete two newly created replicasets 
+
+$ kubectl delete replicaset replicaset-1
+
+$ kubectl delete replicaset replicaset-2
+
+
+
+15. fix the original replicaset correct the image
+
+
+$ kubectl edit replicaset new-replica-set
+
+change image bsuybox777 to busybox
+
+delete the older pods
+
+
+16. scale the replicaset up to 5replicas
+
+$  kubectl scale replicaset new-replica-set --replicas=5
+
+17. scale down the replicaset up to 2 replicas
+
+$ kubectl scale replicaset new-replica-set --replicas=2
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

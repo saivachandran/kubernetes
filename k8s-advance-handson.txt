@@ -259,6 +259,225 @@ $ kubectl scale replicaset new-replica-set --replicas=2
 
 
 
+----------------------------------------------------------------------------------------------------------------------------
+27.01.2021
+==========
+
+Deployment-practice on kodecloude
+---------------------------------
+
+1. How many pod exist on the system
+
+$ kubectl get pods
+
+Answer is 0
+
+2. How many replicasets exist on the system
+
+$ kubectl get replicasets
+
+Answer is 0
+
+3. how many deployment exist on the system
+
+$ kubectl get deployment
+
+Answer is 0
+
+4. how many deployment exist on the system
+
+now we created new one
+
+$ kubectl get deployment
+
+Answer is 1
+
+5. how many replicaset exist on the system
+
+$ kubectl get replicaset
+
+Answer is 1
+
+6. how many pods exist now
+
+$ kubectl get pods
+
+Answer is 4
+
+7. out of all existing how many are ready
+
+Answer is 0
+
+8. what image used to create pod in the deployment
+
+$ kubectl describe deployment  frontend-deployment | grep -i image
+
+Answer is busybox888
+
+9. why do think deployment not ready
+
+$ kubectl decribe pod podname
+
+Answer is image doesn't exist error
+
+10. create deployment new file deployment-definition-1.yaml
+
+error kind: deployment  usong small d
+
+
+vim deployment-definition-1.yaml
+
+change deployment to Deployment
+
+$ kubectl apply -f deployment-definition-1.yaml
+
+
+
+11. create own deployment using below attribute
+
+name= httpd-frontend image= httpd:2.4-alpine --replicas=3
+
+$ kubect create deployment httpd-frontend --image=httpd:2.4-alpine --replicas=3
+
+---------------------------------------------------------------------------------------------------------------------------
+
+28.01.2021
+==========
+
+namespace-practice-tests
+------------------------
+
+1. How many Namespaces exist on the system?
+
+
+Remember to use Google Chrome to open this quiz portal. It may hang going forward.
+
+$ kubectl get ns
+
+NAME              STATUS   AGE
+default           Active   111s
+dev               Active   35s
+finance           Active   35s
+kube-node-lease   Active   113s
+kube-public       Active   113s
+kube-system       Active   113s
+manufacturing     Active   35s
+marketing         Active   35s
+prod              Active   35s
+research          Active   35s
+
+
+kubectl get ns --no-headers | wc -l
+10
+
+Answer is 10
+
+
+
+2. How many pods exist in the 'research' namespace?
+
+
+kubectl get pods -n research
+NAME    READY   STATUS             RESTARTS   AGE
+dna-1   0/1     CrashLoopBackOff   5          4m46s
+dna-2   0/1     CrashLoopBackOff   5          4m46s
+
+
+Answer is 2
+
+
+3.Create a POD in the 'finance' namespace.
+
+
+Use the spec given on the right.
+
+
+Name: redis
+Image Name: redis
+
+
+
+kubectl run redis --image=redis --dry-run=client -o yaml > pod.yaml
+
+vim pod.yaml
+
+apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: null
+  labels:
+    run: redis
+  name: redis
+  namespace: finance
+spec:
+  containers:
+  - image: redis
+    name: redis
+    resources: {}
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
+status: {}
+
+add namspace in metadata section
+
+
+kubectl apply -f pod.yaml 
+pod/redis created
+
+$ kubectl get pods -n finance 
+NAME      READY   STATUS    RESTARTS   AGE
+payroll   1/1     Running   0          9m14s
+
+
+4. Which namespace has the 'blue' pod in it?
+
+kubectl get pods --all-namespaces | grep blue
+marketing       blue                                   1/1     Running            0          13m
+
+Answer is marketing
+
+
+5. Access the Blue web application using the link above your terminal
+
+
+From the UI you can ping other services
+
+
+
+6. What DNS name should the Blue application use to access the database 'db-service' in its own namespace - 'marketing'.
+
+
+You can try it in the web application UI. Use port 3306.
+
+
+
+
+Blue - Marketing Application
+Connectivity Test
+Host Name  db-service
+Host Port  3306
+
+
+test
+
+Answer is db-service
+
+
+
+7. What DNS name should the Blue application use to access the database 'db-service' in the 'dev' namespace
+
+
+You can try it in the web application UI. Use port 3306.
+
+
+Answer db-service.dev.svc.cluster.local
+
+
+------------------------------------------------------------------------------------------------------
+
+
+
+
 
 
 

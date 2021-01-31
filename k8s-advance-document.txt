@@ -944,9 +944,428 @@ $ kubectl scale --replicas=6 replicaset myapp-replicaset
 
 -------------------------------------------------------------------------------------------------------
 
+25.01.2021
+==========
 
+Recap-Deployment
+----------------
+
+. Discus about how you deploy your application in production enviroment
+
+. have webserver need to deploy in production enviroment many instances running for obivious reasons
+
+. whenever newer version application build and avilable in docker hub registory
+
+. however you do not  want upgrade all of the at once, this may impact user accessing application
+
+. you might want to upgrade one after another that kind of upgrade known as rolling update
+
+. some rolling update perform unexpected error you ask undo recent change 
+
+. pause and resume the changes in the deployment all options avilable in kubernetes deployment
+
+. each encapsulated with pod	
+
+
+Deployment definition file
+--------------------------
+
+vim deployment-definition.yaml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp-deployment
+  labels:
+    app: myapp
+spec:
+  selector:
+    matchLabels:
+      app: myapp
+  replicas: 6
+  template:
+    metadata:
+      name: nginx-2
+      labels:
+        app: myapp
+    spec:
+      containers:
+        - name: nginx 
+          image: nginx    
+
+
+
+ $ kubectl create -f deployment-definition.yaml
+
+ $ kubectl get deployments
+
+ $ kubectl get pods
+
+view all kubernetes object
+--------------------------
+
+$ kubectl get all
+
+-------------------------------------------------------------------------------------------------------------------
+27.01.2021
+==========
+
+Namespaces
+----------
+
+Kubernetes supports multiple virtual clusters backed by the same physical cluster. These virtual clusters are called namespaces
+
+
+. so farwe created pod, deployment services, whatever we created comes under namspaces
+
+. this namespace known as default namespaces it created automatically when cluster first setup
+
+. kubernetes created set of pods and services for internal purposes those required for networking and dns purposes
+
+. to isolate these from user prevent accidently deleting or modifing services 
+
+. kubernetes create under another namespace at cluster startup named kube-system
+
+. 3rd namespace created automatically called kube-puplic
+
+. you can your namespace 
+
+. create same namespaces for dev and prod but isolate resources between them
+
+. you can create different namespace for each of them
+
+. each of these policies have own set of policies who can do what
+
+. each of namespaces have resource limits
+
+. resources with in namespaces refer simply by their names
+
+. this case we-app-pod simple reach db service using hostname
+
+
+
+$ kubectl get pods
+
+. above command list the pods only in the default namespaces
+
+to lsit another namespace pods
+
+$ kubectl get pods --namespace=kube-system
+
+
+create pod defintion file
+------------------------
+
+$ kubectl create -f pod-defintion.yaml
+
+it will create pod on default namespace
+
+to create another namespace use namespace option
+
+$ kubectl create pod -f pod-defintion.yaml --namespace=dev
+
+. alternativly yo can specify the namespace in metadata section  it will ensure pod always created on same name space
+
+
+
+how to create namespace
+----------------------
+
+. like aother option use namespace defintion file
+
+vim namespace-definition.yaml
+
+apiVersion: v1
+
+kind: Namespace
+
+metadata: 
+
+  name: dev
+
+
+$ kubectl create -f namespace-definition.yaml
+
+another way
+
+$ kubectl create namespace dev
+
+
+
+three namespaces
+----------------
+
+  dev                                      default                                         prod
+
+          
+$ kubectl get pods --namespace=dev     kubectl get pods                            kubectl get pods --namespace=prod
+
+
+we want switch dev name space permanently
+
+$ kubectl config set-context $( kubectl config current-context ) --namespace=dev
+
+you should mention other namespace option
+
+view all namespace pods
+
+$ kubectl get pods --all-namespaces
 
  
+
+limit resource for namespace
+----------------------------
+
+vim compute-quota.yaml
+
+apiVersion: v1
+
+kind: ResourceQuota
+
+matadata: 
+  name: compute-quota
+  namespace: dev
+
+spec:
+  hard:
+    pods: "10"
+    requests.cpu: "4"
+    requests.memory: "5Gi"
+    limits.cpu: "10"
+    limits.memory: 10Gi
+
+$ kubectl create -f compute-quota.yaml
+
+----------------------------------------------------------------------------------------------------------
+
+29.01.2021
+=========
+
+kubernetes-services
+-------------------
+
+. kubernetes services enable communication between various component within and outside the of the application
+
+. kubernetes help us applications connect together 
+
+. group of pods running with set of services  frontend and backend aonther one external data source
+
+. service enable communication between them
+
+. services enable loose coupling between microservices 
+
+
+External communication
+----------------------
+
+we have deploy we application in the running pod
+
+. node ip address 192.168.1.2 my labtop on same network as well, internal pod network range 10.244.0.0 
+
+. clearly i can't access or ping pod from our labtop to overcome this issue services comes
+
+. kubernetes service is a object just like pod, replicaset, deployment, one of it's use case listen port on the node and forward that request to pod running the webapplication this type of service known us nodeport service
+
+. other kind of services available which we now going to discuss
+
+
+
+types of services
+-----------------
+
+1. nodeport
+
+. service makes internal pod acccssible to end users it's called nodeport
+
+. there are 3 ports involved the port on the pod actual web server running is 80, it's refered to target port thats where service forward the request
+
+. second port the port on the service itself, it's simply refered to port,  service like virtual server inside the node, cluster it has it's own ip address, it's called cluster ip of the service 
+
+. finally we use port node itself it uses weapplication access externally known as nodeport, it's set to 30008 node port only be valid range
+
+30000 to 32767 
+
+2. clusterip
+
+service create virtual ip inside the cluster enable communication between different services to setof frontend servers to setof backend servers
+
+3. load balancer
+
+this service provide load balancer for our application distribute the load across the different web server in fronend tier
+
+
+
+lets now look how to create service we use definition file to create a service
+
+vim service-definition.yaml
+
+
+apiVersion: v1
+
+kind: Service
+
+matadata:
+
+  name: myapp-service
+
+spec:
+
+  type: NodePort
+  ports:
+  - targetPort: 80
+    port: 80
+    nodePort: 30008
+
+ selector:
+   app: myapp
+   type: fron-end
+
+
+
+kubectl apply -f service-defintion.yaml
+
+
+
+to view created service
+
+$ kubectl get services
+
+curl http://192.168.1.2:30008
+
+
+
+
+
+multiple pods
+------------
+
+. production enviroment need to run multiple pods for high availability
+
+. they all have same labels with key app and value myapp same label used as a selector match the pod create the pods, it uses random alogrithm to balance the load
+
+
+finally we look pod distribute across multiple node, this case we have wepapplication pods on sepaerate node on the cluster, kubernetes automatically create span across all nodes with same nodeport 30008
+
+--------------------------------------------------------------------------------------------------------
+
+kubernetes-service-cluster-ip
+-----------------------------
+
+. group of pods running frontend web server, anotherv set of running backend server and another set of pods for db
+
+. web frontend server need to communicate with backend and backend server need to communicate with redis database etc
+
+. so what is right way to to estabilish connctivity between services
+
+. pods ip assigned to them these ip as known not static, pods goes down and new one created anytime, so we can't rely pod ip for internal
+
+ communication purposes
+
+. kubernetes service group pods together can give single interface to access the pod in the group
+
+. each service have ip name assigned to them that should be used by other pods to access the service , this type of service known as
+
+cluster ip
+
+
+
+vim service-definition.yaml
+
+apiVsersion: v1
+
+kind: Service
+
+metadata:
+
+  name: back-end
+
+spec: 
+  type: ClusterIp
+  ports:
+  - targetPort: 80
+    port: 80
+  selector:
+     app: myapp
+     type: back-end
+
+
+$ kubectl apply -f  service-definition.yaml
+
+to view services
+
+$ kubectl get services
+
+-------------------------------------------------------------------------------------------------------
+
+services load-balancer
+---------------------
+
+steps
+----
+1. create Deployments
+
+2. create service (Cluster ip)
+
+3. create service (Load balancer)
+
+
+application is voting app and result app
+
+
+. these pods on worker node in the cluster, we have four node cluster 
+
+. service nodeport helps receiving traffic  and routing traffic to respective pods
+
+. but what url to give end user to access the applications, they only want single url to access the applications
+
+. like http://example-voting-app.com  http://example-result-app.com need to achive one way
+
+
+. create load balancer in the new vm installed suitable load balancer on  it like ha proxy
+
+
+. then configure loadbalncer to route the traffic to underline node
+
+
+
+. if your supported cloud platform like aws azure kubernetes supporting native load balancer integrate with applications
+
+. in service defintion file set type loadbalancer instead of nodeport
+
+--------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+     
+
+
+
+    
+
+
+
+                       
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
 
 
 

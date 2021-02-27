@@ -1242,7 +1242,7 @@ multiple pods
 . production enviroment need to run multiple pods for high availability
 
 . they all have same labels with key app and value myapp same label used as a selector match the pod create the pods, it uses random alogrithm to balance the load
-
+.
 
 finally we look pod distribute across multiple node, this case we have wepapplication pods on sepaerate node on the cluster, kubernetes automatically create span across all nodes with same nodeport 30008
 
@@ -1333,6 +1333,505 @@ application is voting app and result app
 . in service defintion file set type loadbalancer instead of nodeport
 
 --------------------------------------------------------------------------------------------------------------------
+
+01.02.2021
+----------
+
+imperative vs declarative in kubernetes
+---------------------------------------
+
+
+imperative
+----------
+
+Kubernetes objects can quickly be created, updated, and deleted directly using imperative commands built into the kubectl command-line tool. This document explains how those commands are organized and how to use them to manage live objects
+
+
+commands
+--------
+
+$ kubectl run nginx --image=nginx
+
+$ kubectl create deployment --image=nginx nginx
+
+$ kubectl expose deployment nginx --port 80
+
+$ kubectl edit deployment nginx
+
+$ kubectl scale deployment nginx --replicas=5
+
+$ kubectl set image deployment nginx --image=nginx:1.8
+
+
+we also use object configuration file to manage object
+
+$ kubectl create -f nginx.yaml
+
+
+editing object
+
+$ kubectl replace -f nginx.yaml
+
+$ kubectl delete -f nginx
+
+
+it's difficult to tarck that where object configuration file can help
+
+
+
+
+Declarative
+-----------
+
+Declarative creating, updating deleting object using apply command read configuration file what need to done bring infra expected state
+
+
+$ kubectl apply -f nginx.yaml
+
+apply command will look existing configuration figure out what changes need to made 
+
+
+exam perspective  you could use imaperative commands to save time
+
+-------------------------------------------------------------------------------------------------------------
+04.02.2021
+==========
+
+How kubectl apply command works
+-------------------------------
+
+Declrative
+----------
+
+$ kubectl apply -f nginx.yaml
+
+
+$ kubectl apply -f /path-to/configfiles
+
+
+
+
+vim nginx.yaml
+
+apiVersion: v1
+
+kind: Pod
+
+metadata:
+
+  name: myapp-pod
+  labels: 
+    app: myapp
+    type: front-end-service
+
+spec: 
+
+  containers:
+  - nginx-container
+    image: nginx:1.18
+
+   
+
+
+update objects
+-------------
+
+kubectl apply -f nginx.yaml
+
+
+. apply command take into local file consideration and last applied configuration before make decision what changes to be made 
+
+. when you run apply command if object doesn't exist object is created but additional field store data object 
+
+. yaml version of local configuration file converted to json format then it's stored last applied configuration 
+
+. if you update the object it's comapared loacal, last applied config and live file  match all three files idetify the what change to be made 
+
+. if you update the nginx1.18 to nginx1.19 it's comapred with live if differ version it's update the live file then automatically update the last
+
+ applied configuration file
+
+. then why we need last applied configuration, last applied config help us what field removed from live config file
+
+----------------------------------------------------------------------------------------------------------------------------
+
+04.02.2021
+==========
+
+scheduling introduction
+-----------------------
+
+1. labels and selectors
+
+2. Resuorce Limits
+
+3. manual scheduling
+
+4. Daemon Sets
+
+5. Multiple schedulers
+
+6. scheduler Events
+
+7. configure Kubernetes scheduler
+
+
+--------------------------------------------------------------------------------------------------------------------------
+
+11.02.2021
+==========
+
+. Lets see simple cluster scenerio 4 nodes, we also have set of pods to deploy node
+
+. when pods created, kubernetes scheduler try to place pod to available worker node
+
+. now no limitations and restrictions to pod place the pod equally
+
+. let us a assume we have dedicated resuorce for node1 for particular use case
+
+. first we prevent node1 to place pod taint on node1 lets call blue
+
+. by defult pod don't have tolerations 
+
+. we must specify which to tolerant to particular pod, we add tolerations pod d
+
+. pod d now tolerant to blue
+
+. rememember taints set to node, tolerations set to pod
+
+
+
+Taint the node
+--------------
+
+kubectl taint nodes node-name key=value:taint-effect 
+
+. if you like to dedicate pod to the node blue then key app=blue, taint effect define what would happen to pod 
+
+. there are three taint effect 
+
+  1. No schedule
+
+ which means no pod schedule on node1 
+  
+  2. PreferNoschedule
+
+ which means try to aviod placing pod on node
+
+  3. NoExecute
+
+new pod not schedule on node if existing pod on node
+
+
+Example command
+---------------
+
+$ kubectl taint nodes node1 app=blue:NoSchedule
+
+
+vim pod-definition.yaml
+
+apiVersion: v1
+
+kind: Pod
+
+metadata:
+
+  name: myapp-pod
+
+spec:
+  containers:
+  
+  - name: nginx-container
+    
+    image: nginx
+
+  tolerations:
+  
+  - key: app
+    operator: Equal
+    value: blue
+    effect: NoSchedule
+
+need to be encoded in double quotes
+
+
+Taint-NoExecute
+---------------
+
+. if have two pods on node1 d and c set Noexecute to pod d, it's evoct the pod c
+
+. taints and tolerations only restrict and limiation for nodes not sceduling pods
+
+. taints and tolerations not schedule the pod just tell the node to accept certain tolerations
+
+. if your requirement restrict pod to certain node, we use node affinity 
+
+
+. we have master node, techically it's just a another node all the hosting pod plus, all the mangement software 
+
+. scheduler doens't schedule any pod on master node why ? kubernetes setup first set taints to master node prevent any pod schedule on the node
+
+
+$ kubectl describe node kubemaster | grep Taint
+
+
+----------------------------------------------------------------------------------------------------------------------
+
+Node-selector
+============
+
+. We have 3 node cluster with lower resource configuration with one of the them larger configuration
+
+. Different kind of work load running on your cluster, you like to dedicate data process require higher host power, that only node not out of 
+
+resources 
+
+. current defulat setup any pods can goes to any node 
+
+
+Node selector pod definition file we add new property called node selector on spec section
+
+vim pod-defintion.yaml
+
+apiVersion: v1
+
+kind: Pod
+
+matadata:
+
+  name: myapp-pod
+
+spec:
+
+  containers:
+  - name: data-processor
+    image: data-processor
+  nodeSelector: 
+    size: Large
+
+
+. where did size come from how kubernetes know which one large
+
+. the key value pair, size and large infact label assign to node
+
+. you first label your node prior to create pod
+
+
+label nodes
+-----------
+
+$ kubectl label nodes <node-name> <label-key> <label-value>
+
+$ kubectl label node node-1 size=large
+
+
+kubectl apply -f pod-defintion.yaml
+
+now pod assigned to node-1
+
+
+node selector served purpose 
+
+---------------------------------------------------------------------------------------------------------
+
+Node Affinity
+=============
+
+This page shows how to assign a Kubernetes Pod to a particular node using Node Affinity in a Kubernetes cluster
+
+ 
+
+ You need to have a Kubernetes cluster, and the kubectl command-line tool must be configured to communicate with your cluster. If you do not already have a cluster, you can create one by using minikube or you can use one of these Kubernetes playgrounds:
+
+    Katacoda
+    Play with Kubernetes
+
+Your Kubernetes server must be at or later than version v1.10. To check the version, enter kubectl version.
+
+--------------------------------------------------------------------------------------------------------------------
+
+17.02.2021
+==========
+
+Resource limits
+---------------
+
+. lets look at 3 node kubernetes cluster
+
+. each nodes set of cpu, memory and disk resuorces available
+
+. Every pod consume set 0f resources this case 2 cpu one memory and some disk space
+
+. kubernetes scheduler decide which node pod goes to
+
+. scheduler take into consideration resources required by pod
+
+. this case scheduler new pod on node2, node has no sufficent resources, schedluer avoid placing pod on that node, instead place pod on where
+
+ sufficient resiurces available
+
+. in sufficent resuorce available any of the node kubernetes hold back place pod on node, it's shows pending status 
+
+
+Now focus resource requirement of each pod
+------------------------------------------
+
+. by default kubernetes container require 0.5 cpu and 256mi memory to run pod this known us resource requirement for container 
+
+. when scheduler try to place pod on the node these resource identify sufficent number of resources available
+
+. if you know your application need more than this, you can modify this value pod or deployment definition file
+
+
+vim pod-definition.yaml
+
+apiVersion: v1
+
+kind: Pod
+
+metadata: 
+
+  name: simple-web-color
+  labels:
+
+    name: simple-web-color
+
+spec:
+
+  containers:
+  - name: simple-web-color
+    image: simple-web-color
+    ports:
+      containerPort: 8080
+      
+    resources:
+      requests:
+        memeory: 1Gi
+        cpu: 1
+      limits:
+        memory: 2gi
+        cpu: 2
+
+
+0.1 cpu -> 100m
+
+
+you can set resource limit for usage pod
+
+by default kubernetes set limit 1vcpu memory 512 mi you don't like default limit, you can set limit und resource section
+
+. resource limit and request each node node on pod defintion file
+
+. pod get exceeds beyonds resource limits, conatiner use more memory contantly it's terminate the pod 
+
+---------------------------------------------------------------------------------------------------------------------------
+21.02.2021
+----------
+
+DaemonSets
+----------
+
+ 
+. Daemon Sets like replicasets it's help to deploy multiple instances of pod but run one copy of pod on each node 
+
+. Whenever new node added to cluster replica of the pod automattically addded to node, if node removed pod automatically removed 
+
+. Daemon sets ensure one copy of the pod always running on the node
+
+
+some use cases of daemon sets
+----------------------------
+
+. Deploying Monitoring agent or log collector deploying each of the node 
+
+. Deploying monitoring agent in the form of pod all the node in your cluster 
+
+. whether changes in your cluster, daeonsets will take care for you 
+
+. one of the worker node component require every node, it's kube proxy that one use case of daemonsets
+
+. kube-proxy can deploy as a deamonsets 
+
+. another use case for networking 
+
+----------------------------------------------------------------------------------------------------------------------------
+
+27.02.2021
+==========
+
+static pods
+-----------
+
+. Earlier we talk about kubernetes architecture and how kubelet functions as many control plane component 
+
+. the kubelet relay on kube-api server for instruction what pod load on a node, based decision made by kube scheduler 
+
+. what happened no kube-apiserver, kube-scheduler, etcd cluster, kube-controller
+
+. anything kubelet can do, kubelet captain on the ship, can operate independent on node 
+
+. kubelet can manage the node independely, host we have kubelet installed have docker as well run container
+
+. no kubernetes cluster, there is no kube-api server, one thing kubelet knows to do create pod
+
+. we don't have api sever to provide pod details, we need pod definition file to create pod
+
+. kubelet periodicly check this directory for files and create pod on host, create pod that ensure pod stays alive
+
+. if application restarted kubelet attempt to restart pod
+
+. any change with in this directory kubelete recreate the pod
+
+. if remove file from this directory pod automatically removed , these component created by kubelet without kube-apiserver and rest of kubernetes component
+
+. kubelet only understand pod level 
+
+. what is designated folder it could be any folder on host
+
+. once create pod use docker ps command to check pod
+
+. if kubelet create static pod, its part of cluster, it also create mirror api server, it's just a read only mirror of the pod 
+
+
+different between staic pod and daemonsets
+------------------------------------------
+
+Daemonsets as we saw earlier ensure one instances of applications run all nodes in the cluster it hanled by Daemonset controller throuh kube-apiserver
+
+static pod directly created by kubelet and create rest of kubernetes component
+
+static pod used to create kubernetes control plane component itself, ignore by kube-scheduler
+
+-------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+ 	
+
+
+
+
+
+
+
+   
+ 
+
+
+
+
+
+
+
+
+
 
 
 

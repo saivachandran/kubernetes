@@ -1602,3 +1602,1246 @@ Connection to 172.17.0.32 closed.
 
 -----------------------------------------------------------------------------------------------------------------------------
 
+28.02.2021
+==========
+
+multiple scheduler practice test on kodekloud
+---------------------------------------------
+
+
+1. What is the name of the POD that deploys the default kubernetes scheduler in this environment?
+
+$ kubectl -n kube-system get pods | grep "\-scheduler"
+kube-scheduler-controlplane            1/1     Running   0          14m
+
+
+
+2. What is the image used to deploy the kubernetes scheduler?
+
+
+Inspect the kubernetes scheduler pod and identify the image
+
+
+
+$ kubectl -n kube-system describe pod kube-scheduler-controlplane | grep -i image
+    Image:         k8s.gcr.io/kube-scheduler:v1.19.0
+    Image ID:      docker-pullable://k8s.gcr.io/kube-scheduler@sha256:529a1566960a5b3024f2c94128e1cbd882ca1804f222ec5de99b25567858ecb9
+
+
+
+
+3. Deploy an additional scheduler to the cluster following the given specification.
+
+
+Use the manifest file used by kubeadm tool. Use a different port than the one used by the current one.
+
+
+
+Namespace: kube-system
+Name: my-scheduler
+Status: Running
+Custom Scheduler Name
+
+
+cd /etc/kubernetes/manifests/
+
+cp kube-scheduler.yaml /root/my-scheduler.yaml
+
+
+vim /root/my-scheduler.yaml
+
+        - --leader-elect=false
+        - --scheduler-name=my-scheduler
+
+
+change name to my-scheduler
+
+
+$ kubectl create -f my-scheduler.yaml
+
+
+$ kubectl -n kube-system get pods
+
+
+
+4. A POD definition file is given. Use it to create a POD with the new custom scheduler.
+
+
+File is located at /root/nginx-pod.yaml
+
+
+info_outline
+Hint
+Name: nginx
+Uses custom scheduler
+Status: Running
+
+
+vim nginx-po
+
+
+under spec section
+
+schedluername: my-scheduler
+
+
+
+kubectl create -f nginx-pod.yaml
+
+
+--------------------------------------------------------------------------------------------------------------------------
+
+28.02.2021
+==========
+
+monitoring practice test on kodekloud
+-------------------------------------
+
+1. Let us deploy metrics-server to monitor the PODs and Nodes. Pull the git repository for the deployment files.
+
+
+https://github.com/kodekloudhub/kubernetes-metrics-server.git
+
+
+$ git clone https://github.com/kodekloudhub/kubernetes-metrics-server.git
+
+
+
+2. Deploy the metrics-server by creating all the components downloaded.
+
+
+Run the 'kubectl create -f .' command from within the downloaded repository.
+
+
+
+cd kubernetes-metrics-server/
+
+$ kubectl create -f .
+
+
+3. It takes a few minutes for the metrics server to start gathering data.
+
+
+Run the 'kubectl top node' command and wait for a valid output.
+
+
+$ kubectl top node
+NAME           CPU(cores)   CPU%   MEMORY(bytes)   MEMORY%   
+controlplane   142m         7%     1067Mi          56%       
+node01         1998m        99%    588Mi           15%   
+
+
+4. Identify the node that consumes the most CPU.
+
+
+node01
+
+
+5. Identify the node that consumes the most Memory.
+
+
+Master/controlplane
+
+
+6. Identify the POD that consumes the most Memory.
+
+
+$ kubectl top pod
+NAME       CPU(cores)   MEMORY(bytes)   
+elephant   13m          50Mi            
+lion       893m         1Mi             
+rabbit     971m         1Mi  
+
+ans: elephant
+
+7. Identify the POD that consumes the most CPU.
+
+
+Ans: rabbit
+
+----------------------------------------------------------------------------------------------------------------------
+
+28.02.2021
+==========
+
+1. We have deployed a POD hosting an application. Inspect it. Wait for it to start.
+
+
+$ kubectl get pods
+
+NAME       READY   STATUS    RESTARTS   AGE
+webapp-1   1/1     Running   0          78s
+
+
+2. A user - 'USER5' - has expressed concerns accessing the application. Identify the cause of the issue.
+
+
+Inspect the logs of the POD
+
+
+$ kubectl logs -f webapp-1 | grep -i user5
+
+[2021-02-28 10:44:54,476] WARNING in event-simulator: USER5 Failed to Login as the account is locked due to MANY FAILED ATTEMPTS.
+[2021-02-28 10:44:59,484] WARNING in event-simulator: USER5 Failed to Login as the account is locked due to MANY FAILED ATTEMPTS
+
+
+3. We have deployed a new POD - 'webapp-2' - hosting an application. Inspect it. Wait for it to start.
+
+
+$ kubectl get pods
+NAME       READY   STATUS    RESTARTS   AGE
+webapp-1   1/1     Running   0          4m45s
+webapp-2   2/2     Running   0          31s
+
+
+$ kubectl logs -f webapp-1 | grep -i user5
+
+[2021-02-28 10:47:59,995] WARNING in event-simulator: USER30 Order failed as the item is OUT OF STOCK.
+
+
+4. A user is reporting issues while trying to purchase an item. Identify the user and the cause of the issue.
+
+
+Inspect the logs of the webapp in the POD
+
+
+$ kubectl logs webapp-2  -c simple-webapp | grep -i item
+
+[2021-02-28 10:49:28,148] WARNING in event-simulator: USER30 Order failed as the item is OUT OF STOCK.
+
+--------------------------------------------------------------------------------------------------------------------
+
+04.03.2021
+==========
+
+rolling-update-practice-test
+----------------------------
+
+1. We have deployed a simple web application. Inspect the PODs and the Services
+
+
+Wait for the application to fully deploy and view the application using the link above your terminal.
+
+
+$ kubectl get pods
+NAME                        READY   STATUS    RESTARTS   AGE
+frontend-7776cb7d57-77pf7   1/1     Running   0          53s
+frontend-7776cb7d57-lnxwd   1/1     Running   0          53s
+frontend-7776cb7d57-m7xsr   1/1     Running   0          53s
+frontend-7776cb7d57-slgfl   1/1     Running   0          53s
+
+
+2. What is the current color of the web application?
+
+Ans: blue
+
+
+3. Run the script named curl-test.sh to send multiple requests to test the web application. Take a note of the output.
+
+
+Execute the script at /root/curl-test.sh.
+
+
+$ /root/curl-test.sh 
+
+Hello, Application Version: v1 ; Color: blue OK
+
+Hello, Application Version: v1 ; Color: blue OK
+
+
+4. Inspect the deployment and identify the number of PODs deployed by it
+
+
+Ans : 4
+
+
+5. What container image is used to deploy the applications?
+
+$ $ kubectl describe deployments.apps frontend | grep -i "image"
+    Image:        kodekloud/webapp-color:v1
+
+
+
+5. Inspect the deployment and identify the current strategy
+
+$ kubectl describe deployments.apps frontend | grep -i "strategy"
+
+StrategyType:           RollingUpdate
+RollingUpdateStrategy:  25% max unavailable, 25% max surge
+
+
+6. If you were to upgrade the application now what would happen?
+
+
+pods are upgraded few at a time
+
+
+
+
+7. Let us try that. Upgrade the application by setting the image on the deployment to 'kodekloud/webapp-color:v2'
+
+
+Do not delete and re-create the deployment. Only set the new image name for the existing deployment.
+
+
+$ kubectl edit deployments.apps frontend 
+deployment.apps/frontend edited
+
+change v1 to v2
+
+
+
+8. Run the script curl-test.sh again. Notice the requests now hit both the old and newer versions. However none of them fail.
+
+
+Execute the script at /root/curl-test.sh.
+
+
+$ /root/curl-test.sh 
+
+Hello, Application Version: v2 ; Color: green OK
+
+Hello, Application Version: v2 ; Color: green OK
+
+
+9. Up to how many PODs can be down for upgrade at a time
+
+
+Consider the current strategy settings and number of PODs - 4
+
+
+Ans: 1
+
+
+10. Change the deployment strategy to 'Recreate'
+
+
+Do not delete and re-create the deployment. Only update the strategy type for the existing deployment.
+
+
+
+
+10 .Change the deployment strategy to 'Recreate'
+
+
+Do not delete and re-create the deployment. Only update the strategy type for the existing deployment.
+
+
+$ kubectl edit deployments.apps frontend 
+deployment.apps/frontend edited.
+
+chnage: rollingUpdate to Recreate
+
+
+
+11. Upgrade the application by setting the image on the deployment to 'kodekloud/webapp-color:v3'
+
+
+Do not delete and re-create the deployment. Only set the new image name for the existing deployment.
+
+
+
+$ kubectl edit deployments.apps frontend 
+deployment.apps/frontend edited.
+
+change v2 to v3 image version
+
+
+
+$ kubectl get pods
+NAME                        READY   STATUS        RESTARTS   AGE
+frontend-7c7fcfc8cb-bh48j   1/1     Terminating   0          10m
+frontend-7c7fcfc8cb-cjf44   1/1     Terminating   0          10m
+frontend-7c7fcfc8cb-crvqc   1/1     Terminating   0          10m
+frontend-7c7fcfc8cb-k9twg   1/1     Terminating   0          10m
+
+
+12. Run the script curl-test.sh again. Notice the failures. Wait for the new application to be ready. Notice that the requests now do not hit both the versions
+
+
+Execute the script at /root/curl-test.sh.
+
+
+$ /root/curl-test.sh 
+Hello, Application Version: v3 ; Color: red OK
+
+Hello, Application Version: v3 ; Color: red OK
+
+--------------------------------------------------------------------------------------------------------------------------
+
+06.03.2021
+==========
+
+commands-arguments-practice-test-kodekloud
+------------------------------------------
+
+1. How many PODs exist on the system?
+
+
+in the current(default) namespace
+
+
+$ kubectl get pods
+NAME             READY   STATUS    RESTARTS   AGE
+ubuntu-sleeper   1/1     Running   0          9m50s
+
+
+2. What is the command used to run the pod 'ubuntu-sleeper'?
+
+Ans: Command:
+      sleep
+      4800
+
+
+3. Create a pod with the ubuntu image to run a container to sleep for 5000 seconds. Modify the file ubuntu-sleeper-2.yaml.
+
+
+Note: Only make the necessary changes. Do not modify the name.
+
+
+ vim ubuntu-sleeper-2.yaml 
+
+under container section
+
+command ["sleep", "5000"]
+controlplane $ kubectl apply -f ubuntu-sleeper-2.yaml 
+pod/ubuntu-sleeper-2 created
+
+
+4. Create a pod using the file named 'ubuntu-sleeper-3.yaml'. There is something wrong with it. Try to fix it!
+
+
+Note: Only make the necessary changes. Do not modify the name.
+
+
+
+$ vim ubuntu-sleeper-3.yaml 
+
+give sconds with in double quotes
+
+controlplane $ kubectl apply -f ubuntu-sleeper-3.yaml 
+pod/ubuntu-sleeper-3 created
+
+
+5. Update pod 'ubuntu-sleeper-3' to sleep for 2000 seconds.
+
+
+Note: Only make the necessary changes. Do not modify the name of the pod. Delete and recreate the pod if necessary.
+
+
+
+
+vim ubuntu-sleeper-3.yaml
+
+change time to 2000
+
+ $ kubectl delete pod ubuntu-sleeper-3
+
+
+$ kubectl apply -f ubuntu-sleeper-3.yaml 
+pod/ubuntu-sleeper-3 created
+
+
+6. Inspect the file 'Dockerfile' given at /root/webapp-color. What command is run at container startup?
+
+
+ cat Dockerfile
+FROM python:3.6-alpine
+
+RUN pip install flask
+
+COPY . /opt/
+
+EXPOSE 8080
+
+WORKDIR /opt
+
+ENTRYPOINT ["python", "app.py"]
+
+
+
+7. Inspect the file 'Dockerfile2' given at /root/webapp-color. What command is run at container startup?
+
+cat Dockerfile2
+
+FROM python:3.6-alpine
+
+RUN pip install flask
+
+COPY . /opt/
+
+EXPOSE 8080
+
+WORKDIR /opt
+
+ENTRYPOINT ["python", "app.py"]
+
+CMD ["--color", "red"]controlplane $ 
+
+
+8. Inspect the two files under directory 'webapp-color-2'. What command is run at container startup?
+
+
+Assume the image was created from the Dockerfile in this folder
+
+cat webapp-color-pod.yaml 
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: webapp-green
+  labels:
+      name: webapp-green
+spec:
+  containers:
+  - name: simple-webapp
+    image: kodekloud/webapp-color
+    command: ["--color","green"]controlplane $ 
+
+
+9. Inspect the two files under directory 'webapp-color-3'. What command is run at container startup?
+
+
+Assume the image was created from the Dockerfile in this folder
+
+cat webapp-color-pod-2.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: webapp-green
+  labels:
+      name: webapp-green
+spec:
+  containers:
+  - name: simple-webapp
+    image: kodekloud/webapp-color
+    command: ["python", "app.py"]
+    args: ["--color", "pink"]
+
+
+10. Create a pod with the given specifications. By default it displays a 'blue' background. Set the given command line arguments to change it to 'green'
+
+
+info_outline
+Hint
+Pod Name: webapp-green
+Image: kodekloud/webapp-color
+Command line arguments: --color=green
+
+
+$ kubectl run webapp-green --image=kodekloud/webapp-color --dry-run=client -o yaml > pod.yaml
+
+
+vim pod.yaml
+
+args: ["--color=green"]
+
+
+$ kubectl apply -d pod.yaml
+
+---------------------------------------------------------------------------------------------------------------
+
+
+13.03.2021
+==========
+
+Solution Enviroment variable
+----------------------------
+
+
+1. How many PODs exist on the system?
+
+
+in the current(default) namespace
+
+
+
+$ kubectl get pods
+NAME           READY   STATUS    RESTARTS   AGE
+webapp-color   1/1     Running   0          2m57s
+
+controlplane $ kubectl get pods --no-headers | wc -l
+1
+
+
+
+2. What is the environment variable name set on the container in the pod?
+
+
+$ kubectl describe pod webapp-color | grep Environment -A2
+    Environment:
+      APP_COLOR:  pink
+    Mounts:
+
+
+Ans: APP_COLOR
+
+
+
+3. What is the value set on the environment variable APP_COLOR on the container in the pod?
+
+$ kubectl describe pod webapp-color | grep Environment -A2
+    Environment:
+      APP_COLOR:  pink
+    
+
+Ans: pink 
+
+
+4. View the web application UI by clicking on the 'Webapp Color' Tab above your terminal.
+
+
+This is located next to the Quiz Portal tab.
+
+
+ok webapp-color
+
+
+5. Update the environment variable on the POD to display a 'green' background
+
+
+Note: Delete and recreate the POD. Only make the necessary changes. Do not modify the name of the Pod.
+
+
+Pod Name: webapp-color
+Label Name: webapp-color
+Env: APP_COLOR=green
+
+
+
+controlplane $ kubectl get pod webapp-color -o yaml > pod.yaml
+
+controlplane $ vim pod.yaml 
+
+change value pink to green
+
+
+controlplane $ kubectl delete pod webapp-color 
+pod "webapp-color" deleted
+
+controlplane $ kubectl apply -f pod.yaml 
+pod/webapp-color created
+
+
+
+6. View the changes to the web application UI by clicking on the 'Webapp Color' Tab above your terminal.
+
+
+If you already have it open, simply refresh the browser.
+
+
+click webapp-color
+
+
+7. How many ConfigMaps exist in the environment?
+
+
+controlplane $ kubectl get cm
+NAME        DATA   AGE
+db-config   3      35s
+
+
+controlplane $ kubectl get cm --no-headers | wc -l
+1
+
+
+
+8. Identify the database host from the config map 'db-config'
+
+
+
+$ kubectl describe cm | grep -i Host -A5
+DB_HOST:
+----
+SQL01.example.com
+DB_NAME:
+----
+SQL01
+
+
+
+9. Create a new ConfigMap for the 'webapp-color' POD. Use the spec given on the right.
+
+
+ConfigName Name: webapp-config-map
+Data: APP_COLOR=darkblue
+
+
+controlplane $ kubectl create cm webapp-config-map --from-literal=APP_COLOR=darkblue
+
+configmap/webapp-config-map created
+
+controlplane $ kubectl get cm
+NAME                DATA   AGE
+db-config           3      12m
+webapp-config-map   1      6s
+
+
+
+10 .Update the environment variable on the POD use the newly created ConfigMap
+
+
+Note: Delete and recreate the POD. Only make the necessary changes. Do not modify the name of the Pod.
+
+
+info_outline
+Hint
+Pod Name: webapp-color
+EnvFrom: webapp-config-map
+
+
+
+$ kubectl explain pod --recursive | grep envFrom -A5
+
+         envFrom        <[]Object>
+            configMapRef        <Object>
+            name     <string>
+
+
+vim pod.yaml
+
+change above under spec section in pod definition file
+
+
+controlplane $ kubectl delete pod webapp-color 
+pod "webapp-color" deleted
+
+controlplane $ kubectl apply -f pod.yaml 
+pod/webapp-color created
+
+
+-----------------------------------------------------------------------------------------------------------------------
+
+15.03.2021
+==========
+
+secrets practice test in kode kloud
+-----------------------------------
+
+1.How many Secrets exist on the system?
+
+
+in the current(default) namespace
+
+
+controlplane $ kubectl get secrets 
+NAME                  TYPE                                  DATA   AGE
+default-token-v94gx   kubernetes.io/service-account-token   3      68m
+
+
+controlplane $ kubectl get secrets --no-headers | wc -l
+1
+
+
+2. How many secrets are defined in the 'default-token' secret?
+
+
+
+
+$ kubectl describe secret default-token-v94gx | grep -i data -A3
+
+Data
+====
+ca.crt:     1066 bytes
+namespace:  7 bytes
+controlplane $ kubectl describe secret default-token-v94gx | grep -i data -A4
+Data
+====
+token:      eyJhbGciOiJSUzI1NiIsImtpZCI6IlBDVDdHcnBRMjdFNjdRcnJQRG5pX2J5Y012MTVzVDk4UFAzRk5BZmwxU1UifQ.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJkZWZhdWx0Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZWNyZXQubmFtZSI6ImRlZmF1bHQtdG9rZW4tdjk0Z3giLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC5uYW1lIjoiZGVmYXVsdCIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VydmljZS1hY2NvdW50LnVpZCI6IjI2NDJmYTcxLWUzOTAtNDY2ZC1iZTJhLTlhOWFiMDY5MjM3ZSIsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDpkZWZhdWx0OmRlZmF1bHQifQ.CUGfqiSaBBgag89Zg-pIrUCcxVXNHMOOw86RDgODeJuzU0R6VP6jL_uaWlS3UvI77FODwlXQC795wKiFVdru0cJ5EwLpIqZas_cRJHi5YzD_EqtmBDvmAZYkgbIl5pnqPHqTvDqPlOT7BnfEnrWXha17TDdik8rfVA-62ZfB_CQWcAP-aqy289GIMrDn2gpNADK61SYuKGPCm6Own85xRJPVGLFCj5gsh4S5RTPqOw1tYXb8FREwp0jwdcuNX-7L9hLZAhKPoCe7BosGz3vZF60Ue1OqXExyTW_RCULoC896ZzN63e7OOGc7IoKJ1XgeAN2MFjzHawA26eJaWJciUg
+ca.crt:     1066 bytes
+
+
+Ans: 3
+
+
+
+3. What is the type of the 'default-token' secret?
+
+
+$ kubectl describe secret default-token-v94gx | grep -i type
+Type:  kubernetes.io/service-account-token
+
+
+
+4. Which of the following is not a secret data defined in 'default-token' secret?
+
+
+
+Ans: Type
+
+We are going to deploy an application with the below architecture
+
+
+5. We have already deployed the required pods and services. Check out the pods and services created. Check out the web application using the 'Webapp MySQL' link above your terminal, next to the Quiz Portal Link.
+
+
+$ kubectl get pods,svc
+
+NAME             READY   STATUS    RESTARTS   AGE
+pod/mysql        1/1     Running   0          69s
+pod/webapp-pod   1/1     Running   0          69s
+
+NAME                     TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)          AGE
+service/kubernetes       ClusterIP   10.96.0.1        <none>        443/TCP          75m
+service/sql01            ClusterIP   10.107.128.229   <none>        3306/TCP         69s
+service/webapp-service   NodePort    10.108.26.137    <none>        8080:30080/TCP   69s
+5. 
+
+namespace:  7 bytes 
+
+
+
+6.The reason the application is failed is because we have not created the secrets yet. Create a new Secret named 'db-secret' with the data given(on the right).
+
+
+You may follow any one of the methods discussed in lecture to create the secret.
+
+
+info_outline
+Hint
+Secret Name: db-secret
+Secret 1: DB_Host=sql01
+Secret 2: DB_User=root
+Secret 3: DB_Password=password123
+
+
+
+controlplane $ kubectl create secret generic db-secret --from-literal=DB_Host=sql01 --from-literal=DB_User=root --from-literal=DB_Password=password123
+secret/db-secret created
+
+
+controlplane $ kubectl get secret db-secret 
+NAME        TYPE     DATA   AGE
+db-secret   Opaque   3      19s
+
+
+7. Configure webapp-pod to load environment variables from the newly created secret.
+
+
+Delete and recreate the pod if required.
+
+
+info_outline
+Hint
+Pod name: webapp-pod
+Image name: kodekloud/simple-webapp-mysql
+Env From: Secret=db-secret
+
+
+controlplane $ kubectl get pod webapp-pod -o yaml > pod.yaml
+
+
+$ kubectl explain pods --recursive | grep -i envfrom -A8
+         envFrom        <[]Object>
+            configMapRef        <Object>
+               name     <string>
+               optional <boolean>
+            prefix      <string>
+            secretRef   <Object>
+               name     <string>
+               optional <boolean>
+         image  <string>
+
+edit pod.yaml
+
+envFrom:
+
+- secretRef:
+        name: db-secret
+
+$ kubectl delete pod webapp-pod 
+pod "webapp-pod" deleted
+
+
+$ kubectl apply -f pod.yaml 
+pod/webapp-pod created
+
+
+-----------------------------------------------------------------------------------------------------------------
+
+18.03.2021
+==========
+
+init container
+-------------
+
+1. Identify the pod that has an initContainer configured.
+
+$ kubectl describe pod blue | grep -i init
+Init Containers:
+  init-myservice:
+  Initialized       True 
+  Normal  Created    79s   kubelet, node01    Created container init-myservice
+  Normal  Started    78s   kubelet, node01    Started container init-myservice
+
+
+Ans: blue
+
+
+
+2. What is the image used by the initContainer on the blue pod?
+
+ kubectl describe pod blue | grep -i image
+    Image:         busybox
+    Image ID:      docker-pullable://busybox@sha256:ce2360d5189a033012fbad1635e037be86f23b65cfd676b436d0931af390a2ac
+    Image:         busybox:1.28
+    Image ID:      docker-pullable://busybox@sha256:141c253bc4c3fd0a201d32dc1f493bcf3fff003b6df416dea4f41046e0f37d47
+  Normal  Pulling    5m7s   kubelet, node01    Pulling image "busybox"
+  Normal  Pulled     5m5s   kubelet, node01    Successfully pulled image "busybox" in 2.041827278s
+  Normal  Pulled     4m59s  kubelet, node01    Container image "busybox:1.28" already present on machine
+
+
+Ans: busybox
+
+
+3. What is the state of the initContainer on pod blue
+
+$ kubectl describe pod blue | grep -i state
+    State:          Terminated
+    State:          Running
+
+Ans: terminated
+
+
+4. Why is the initContainer terminated? What is the reason?
+
+
+$ kubectl describe pod blue | grep -i reason
+      Reason:       Completed
+  Type    Reason     Age    From               Message
+
+Ans: Completed
+
+
+5. We just created a new app named purple. How many initContainers does it have?
+
+
+
+$ kubectl get pod purple
+NAME     READY   STATUS     RESTARTS   AGE
+purple   0/1     Init:0/2   0          88s
+
+
+Ans: 2
+
+
+6. What is the state of the POD?
+
+
+
+ $ kubectl describe pod purple | grep -i state
+    State:          Running
+    State:          Waiting
+    State:          Waiting
+
+Ans: waiting
+
+
+
+7. How long after the creation of the POD will the application come up and be available to users?
+
+$ kubectl describe pod purple | grep -i sleep
+      sleep 600
+      sleep 1200
+      echo The app is running! && sleep 3600
+
+Ans: 30 mins
+
+
+
+8. Update the pod red to use an initContainer that uses the busybox image and sleeps for 20 seconds
+
+
+Delete and re-create the pod if necessary. But make sure no other configurations change.
+
+
+Pod: red
+initContainer Configured Correctly
+
+
+$ kubectl get pod red -o yaml > red.yaml
+controlplane $ kubectl delete pod red 
+pod "red" deleted
+
+
+vim red.yaml
+
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: red
+  namespace: default
+spec:
+  containers:
+  - command:
+    - sh
+    - -c
+    - echo The app is running! && sleep 3600
+    image: busybox:1.28
+    imagePullPolicy: IfNotPresent
+    name: red-container
+  initContainers:
+  - image: busybox
+    name: red-initcontainer
+    command: ["sleep", "20"]
+
+
+$ kubectl apply -f red.yaml
+
+
+
+9. A new application orange is deployed. There is something wrong with it. Identify and fix the issue.
+
+
+Once fixed, wait for the application to run before checking solution.
+
+
+info_outline
+Hint
+Issue fixed
+
+
+$ kubectl get pod orange -o yaml > ornage.yaml
+controlplane $ kubectl delete pod orange  
+pod "orange" deleted
+
+
+vim ornage.yaml
+
+
+change sleeeep to sleep
+
+
+ $ kubectl apply -f ornage.yaml                
+pod/orange created
+
+
+-------------------------------------------------------------------------------------------------------------------------
+
+
+22.03.2021
+==========
+
+
+cluster maintenance
+--------------------
+
+practice test os upgrade on kodekloud
+-------------------------------------
+
+1. Let us explore the environment first. How many nodes do you see in the cluster?
+
+
+Including the master/controlplane and workers
+
+
+controlplane $ kubectl get nodes
+
+NAME           STATUS   ROLES    AGE     VERSION
+controlplane   Ready    master   2m35s   v1.19.0
+node01         Ready    <none>   2m5s    v1.19.0
+node02         Ready    <none>   2m6s    v1.19.0
+node03         Ready    <none>   2m5s    v1.19.0
+
+
+2. How many applications do you see hosted on the cluster?
+
+
+Check the number of deployments
+
+
+
+controlplane $ kubectl get deployments.apps 
+NAME   READY   UP-TO-DATE   AVAILABLE   AGE
+blue   3/3     3            3           48s
+red    2/2     2            2           48s
+
+controlplane $ kubectl get deployments.apps  --no-headers | wc -l
+2
+
+
+
+3. On which nodes are the applications hosted on?
+
+
+$ kubectl get pods -o wide | awk '{print $7}'
+NODE
+node01
+node02
+node03
+node01
+node03
+
+
+
+4. We need to take node01 out for maintenance. Empty the node of all applications and mark it unschedulable.
+
+
+Node node01 Unschedulable
+Pods evicted from node01
+
+
+$ kubectl drain node01
+node/node01 cordoned
+error: unable to drain node "node01", aborting command...
+
+There are pending nodes to be drained:
+ node01
+error: cannot delete DaemonSet-managed Pods (use --ignore-daemonsets to ignore): kube-system/kube-flannel-ds-amd64-zr58n, kube-system/kube-proxy-ndskz
+
+
+
+$ kubectl drain node01 --ignore-daemonsets
+node/node01 already cordoned
+WARNING: ignoring DaemonSet-managed Pods: kube-system/kube-flannel-ds-amd64-zr58n, kube-system/kube-proxy-ndskz
+evicting pod default/blue-746c87566d-86xcx
+evicting pod default/red-75f847bf79-9nx5j
+pod/blue-746c87566d-86xcx evicted
+pod/red-75f847bf79-9nx5j evicted
+node/node01 evicted
+
+
+5. What nodes are the apps on now?
+
+
+$ kubectl get pods -o wide | awk '{print $7}'
+NODE
+node02
+node03
+node02
+node02
+node03
+
+
+6.The maintenance tasks have been completed. Configure the node to be schedulable again.
+
+
+
+Node01 is Schedulable
+
+
+ $ kubectl uncordon node01
+node/node01 uncordoned
+
+
+7.How many pods are scheduled on node01 now?
+
+
+$ kubectl get pods -o wide | awk '{print$7}' | grep -i node01 | wc -l
+0
+
+
+8.Why are there no pods on node01?
+
+
+new pod will schedule in nodeo1
+
+
+
+8. Why are there no pods placed on the master node?
+
+
+Check the master/controlplane node details
+
+master and controlplane enable taints
+
+
+
+It is now time to take down node02 for maintenance. Before you remove all workload from node02 answer the following question.
+
+
+Can you drain node02 using the same command as node01? Try it.
+
+
+
+
+kubectl drain node01 --ignore-daemonsets --force
+node/node01 cordoned
+WARNING: ignoring DaemonSet-managed Pods: kube-system/kube-flannel-ds-amd64-zr58n, kube-system/kube-proxy-ndskz
+node/node01 drained
+
+
+9. Why do you need to force the drain?
+
+node 2 is part of replicaset
+
+
+What is the name of the POD hosted on node02 that is not part of a replicaset?
+
+
+hr-app
+
+
+10. What would happen to hr-app if node02 is drained forcefully?
+
+
+Try it if you wish
+
+hr-app unscheduled
+
+
+11.Drain node02 and mark it unschedulable
+
+$ kubectl cordon node02
+node/node02 cordoned
+
+
+11. Node03 has our critical applications. We do not want to schedule any more apps on node03. Mark node03 as unschedulable but do not remove any apps currently running on it .
+
+
+
+$ kubectl cordon node03
+node/node03 cordoned
+
+----------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

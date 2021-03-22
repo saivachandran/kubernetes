@@ -1805,6 +1805,462 @@ static pod used to create kubernetes control plane component itself, ignore by k
 
 -------------------------------------------------------------------------------------------------------------------------------
 
+27.02.2021
+==========
+
+multiple scheduler
+-----------------
+
+. you decide to have own scheduling algorithm, so that you can add custom condition 
+
+. kubernetes is highly extensible you can write your own kubernetes scheduler, deployed as a default scheduler 
+
+. kubernetes scheduler can have multiple scheduler 
+
+. kubeadm scheduler deploy the schedluer as a pod
+
+. multiple schedluer one can be active at a time, elect the leader 
+
+
+view scheduler
+-------------
+
+$ kubectl get pods --namespace=kube-system
+
+pod-definition.yaml
+
+apiVersion: v1
+
+kind: Pod
+
+meatadata:
+
+  name: nginx
+
+spec:
+
+  containers:
+    image: ngnix
+    name: nginx
+  schedulerName: my-custom-scheduler
+
+
+kubectl create -f filename.yaml
+
+view events
+
+kubectl get events
+
+
+view the log of the pod
+
+$ kubectl logs my-custom-scheduler --name-space=kube-system
+
+---------------------------------------------------------------------------------------------------------
+
+28.02.2021
+==========
+
+Logging and monitoring
+----------------------
+
+1. Monitor cluster compontent
+
+2. monitor cluster component logs
+
+3. Monitor applications
+
+4. Application logs
+
+
+monitoring kubernetes cluster
+-----------------------------
+
+. how do monitor resource consumption in kubernetes, more importantly what would like to monitor
+
+. like to monitor node level metrics, no of nodes in the cluster, how many of them healthy 
+
+. as well as performance metrics cpu, memory and disk utilization,network 
+
+. pod level metrics performance of each pod cpu and memory consumption on them
+
+. monitoring these data store them and provide analytics on the data
+
+. kubernetes does'nt come fullfilled monitoring solution 
+
+. number of opensource solution available today metric server, prometheus, Elastic stack, datadog, dynatrace
+
+. heapster was one of the original projects monitor and analyis process for kubernetes, heapster now deprecated 
+
+. you can have one metric server on kubernetes cluster, metric server retrive metrics from each of the kubernetes cluster nodes, aggrecate them and store them in memory
+
+. metric server only in memory monitor solution for monitor solution, you can't see historical data performance
+
+. kubernetes run agent on each node kubelet responsible for instruction from api server 
+
+. kubelet also called sub component called cadvisor, cadvisor responsible for receiving performance metrics and exposing tjhem throuh kubelet 
+
+
+. if you use minikube for your local cluster 
+
+minikube addon enable metrics-server
+
+view node memory consumption
+---------------------------
+
+$ kubectl top node
+
+view pod performance metrics
+----------------------------
+
+$ kubectl top pod
+
+
+--------------------------------------------------------------------------------------------------------------------------------------
+
+02.03.2021
+==========
+
+Application-life-cycle-management
+---------------------------------
+
+. We start at rolling update and roleback configure application, scale application 
+
+
+
+ 
+Rollback in a deployment
+------------------------
+
+. Before look how we upgrade our applications understand rollout and versioning in a deployment
+
+. when you first create deployment it triggers rollout, new rollout create new deployment revision call it revision 1
+
+. when application upgraded meaning container version upgrade new one, new deployment revsion created named deployment 2
+
+. this help us keep track changes in our deployment 
+
+
+Rollout command
+---------------
+
+$ kubectl rollout status deployment/myapp-deployment
+
+
+to see revision and history
+---------------------------
+
+$ kubectl rollout history deployment/myapp-deployment
+
+
+
+Deployment statrgey
+-------------------
+
+
+. two types of deployment stargeies for example you have 5 replicas of your web appplication deployed 
+
+. first way to destory older vsersion and create newer version application but our application will down in accessible to user this not best way to do it thats recreate statergy
+
+. second way update version one after another it will not affect the application user can access the application thats called rolling update	
+
+. rolling update is a default deployment statergy 
+
+
+kubectl apply
+-------------
+
+$ kubectl apply -f deployment-definition.yaml
+
+
+$ kubectl set image deployment/myapp-deployment --image=nginx
+
+
+recreate vs rolling update
+
+
+$ kubectl describe deployment/myapp-deployment
+
+it scale down 0 pod and scale up 5 pod
+
+
+rolling upadte scaling down one at time same time up one at time
+
+
+upgrades
+--------
+
+view status of uprades
+
+
+$ kubectl get replicasets
+
+
+
+rollback
+--------
+
+$ kubectl rollout undo deployment/myapp-deployment
+
+
+
+summarize commands
+-----------------
+
+create --> kubectl create -f deployment/myapp-deployment
+
+
+get ---> kubectl get deployment
+
+
+update --> kubectl apply -f deployment/myapp-deployment
+
+       ---> kubectl set image deployment/myapp-deployment --image=nginx:1.17
+
+
+status ---> kubectl rollout status deployment/myapp-deployment
+
+            kubectl rollout history deployment/myapp-deployment
+
+            kubectl rollout undo deployment/myapp-deployment
+
+------------------------------------------------------------------------------------------------------------------------
+
+08.03.2021
+==========
+
+Enviroment variable in application
+----------------------------------
+
+. how to set enviroment variable in kubernetes
+
+. set enviroment variable  use env property, env is a array  every item in array start with -
+
+. each item has name and value property 
+
+
+env varibale type
+-----------------
+
+1. plain key value format
+
+env
+
+  - name: banana
+    value: vitamin
+
+2. configmaps
+
+env:
+
+  - name: APP_COLOR
+    valueFrom:
+        configMapKeyRef
+
+3. secrets
+
+env:
+
+  -name: APP_COLOR
+   valueFrom:
+      secretskeyRef
+------------------------------------------------------------------------------------------------------------------------
+
+10.03.2021
+==========
+
+configuration data in kubernetes
+--------------------------------
+
+. config map are used pass configuration data in a key value pairs in kubernetes 
+
+. when pods is created inject the config maps into the pod, key value pair available as a enviroment variable
+
+two ways create config maps
+---------------------------
+
+imperative
+
+declerative
+
+
+
+kubectl create configmap\
+ app-config --from-literal=APP_COLOR=blue 
+
+
+kubectl create configmap\
+ app-config --from-file=app_config.properties
+
+
+vim config-map.yml
+config-map.yml
+apiVersion: v1
+
+kind: configMap
+
+metadata: 
+  name: app-config
+
+data:
+
+  APP_COLOR: blue
+  APP_MODE:  prod
+
+kubectl create -f config-map.yml
+
+
+
+envFrom:
+
+  - configMapRef: 
+
+      name: app-config
+
+----------------------------------------------------------------------------------------------------------------------
+
+13.03.2021
+==========
+
+Secrets
+-------
+
+. Here we have simple python web application lets connect to mysql database
+
+. if you closely look in to code you username and password given in the code
+
+. move this value to config map, configmap store configuration data in plain text format
+
+. scretes comes in store in encrypted and hashed format
+
+. secrets used to store sensitive information like passwords keys they stored encoded and hashed format
+
+two methods
+-----------
+
+1. create secrets
+
+2. inject in to pod
+
+
+imerative way and declerative way
+
+
+kubectl create secret generic \
+
+ app-secret --from-literal=DB_Host=mysql
+
+            --from-literal=DB_User=root
+            --from-literal=DB_Password=paswd  
+
+
+kubectl create secret generic \
+
+app-secret --from-file=<file-path>
+
+
+secret-data.yaml
+
+apiVersion: v1
+
+kind: Secret
+
+kind:
+
+  name:app-secret
+
+data:
+
+  DB_Host: mysql
+  DB_user: root
+  DB_password: passwd
+
+$ kubectl create -f secret-data.yaml 
+
+
+while we create secret you must specify in hased format  
+
+
+convert plain text to encoded format
+
+echo -n 'mysql'| base64
+bXlzcWw=
+
+echo -n 'root'| base64
+cm9vdA==
+
+
+echo -n 'passwd'| base64
+cGFzc3dk
+
+
+view secrets
+------------
+
+$ kubectl get secrets
+
+
+$ kubectl describe secrets
+
+
+
+decode encoded format
+---------------------
+
+echo -n 'bXlzcWw='|  base64 --decode
+
+mysql
+
+
+echo -n 'cm9vdA=='| base64  --decode
+
+root
+
+echo -n 'cGFzc3dk'| base64  --decode
+
+passwd
+
+
+
+inject into pod definition file
+
+under spec section 
+
+envFrom:
+
+  secretRef:
+
+        name: app-secret
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
 
 
 

@@ -2796,6 +2796,187 @@ node/node03 cordoned
 
 ----------------------------------------------------------------------------------------------------------------------
 
+26.03.2021
+==========
+
+backup-and-restore-in kubernetes
+--------------------------------
+
+1. We have a working kubernetes cluster with a set of applications running. Let us first explore the setup.
+
+
+How many deployments exist in the cluster?
+
+
+ $ 
+controlplane $ kubectl get deployments.apps  
+NAME   READY   UP-TO-DATE   AVAILABLE   AGE
+blue   3/3     3            3           40s
+red    2/2     2            2           40s
+controlplane $ kubectl get deployments.apps --no-headers | wc -l
+2
+
+
+
+2. What is the version of ETCD running on the cluster?
+
+
+Check the ETCD Pod or Process
+
+
+
+$ kubectl -n kube-system get pods | grep -i "etcd"
+etcd-controlplane                      1/1     Running   0          15m
+
+
+$ kubectl -n kube-system describe pod etcd-controlplane | grep -i "image"
+    Image:         k8s.gcr.io/etcd:3.4.9-1
+    Image ID:      docker-pullable://k8s.gcr.io/etcd@sha256:735f090b15d5efc576da1602d8c678bf39a7605c0718ed915daec8f2297db2ff
+
+
+
+
+3. At what address do you reach the ETCD cluster from your master/controlplane node?
+
+
+Check the ETCD Service configuration in the ETCD POD
+
+
+ $ kubectl -n kube-system describe pod etcd-controlplane | grep -i "image"
+    Image:         k8s.gcr.io/etcd:3.4.9-1
+    Image ID:      docker-pullable://k8s.gcr.io/etcd@sha256:735f090b15d5efc576da1602d8c678bf39a7605c0718ed915daec8f2297db2ff
+controlplane $ kubectl -n kube-system describe pod etcd-controlplane | grep -i "https"
+Annotations:          kubeadm.kubernetes.io/etcd.advertise-client-urls: https://172.17.0.27:2379
+      --advertise-client-urls=https://172.17.0.27:2379
+      --initial-advertise-peer-urls=https://172.17.0.27:2380
+      --initial-cluster=controlplane=https://172.17.0.27:2380
+      --listen-client-urls=https://127.0.0.1:2379,https://172.17.0.27:2379
+      --listen-peer-urls=https://172.17.0.27:2380
+
+
+Ans: https://127.0.0.1:2379
+
+
+
+
+4. Where is the ETCD server certificate file located?
+
+
+Note this path down as you will need to use it later
+
+
+ $ kubectl -n kube-system describe pod etcd-controlplane | grep -i "crt"  
+      --cert-file=/etc/kubernetes/pki/etcd/server.crt
+      --peer-cert-file=/etc/kubernetes/pki/etcd/peer.crt
+      --peer-trusted-ca-file=/etc/kubernetes/pki/etcd/ca.crt
+      --trusted-ca-file=/etc/kubernetes/pki/etcd/ca.crt
+
+
+5.Where is the ETCD CA Certificate file located?
+
+
+Note this path down as you will need to use it later
+
+
+ $ kubectl -n kube-system describe pod etcd-controlplane | grep -i "crt"  
+      --cert-file=/etc/kubernetes/pki/etcd/server.crt
+      --peer-cert-file=/etc/kubernetes/pki/etcd/peer.crt
+      --peer-trusted-ca-file=/etc/kubernetes/pki/etcd/ca.crt
+      --trusted-ca-file=/etc/kubernetes/pki/etcd/ca.crt
+
+
+
+6. The master nodes in our cluster are planned for a regular maintenance reboot tonight. While we do not anticipate anything to go wrong, we are required to take the necessary backups. Take a snapshot of the ETCD database using the built-in snapshot functionality.
+
+
+Store the backup file at location /opt/snapshot-pre-boot.db
+
+
+
+Backup ETCD to /opt/snapshot-pre-boot.db
+
+
+
+
+$ ETCDCTL_API=3 etcdctl --cacert="/etc/kubernetes/pki/etcd/ca.crt" --cert="/etc/kubernetes/pki/etcd/server.crt" --key="/etc/kubernetes/pki/etcd/server.key" snapshot save /opt/snapshot-pre-boot.db
+
+
+{"level":"info","ts":1616739294.7114887,"caller":"snapshot/v3_snapshot.go:119","msg":"created temporary db file","path":"/opt/snapshot-pre-boot.db.part"}
+{"level":"info","ts":"2021-03-26T06:14:54.724Z","caller":"clientv3/maintenance.go:200","msg":"opened snapshot stream; downloading"}
+{"level":"info","ts":1616739294.7277067,"caller":"snapshot/v3_snapshot.go:127","msg":"fetching snapshot","endpoint":"127.0.0.1:2379"}
+{"level":"info","ts":"2021-03-26T06:14:54.767Z","caller":"clientv3/maintenance.go:208","msg":"completed snapshot read; closing"}
+{"level":"info","ts":1616739294.7952766,"caller":"snapshot/v3_snapshot.go:142","msg":"fetched snapshot","endpoint":"127.0.0.1:2379","size":"3.2 MB","took":0.083574474}
+{"level":"info","ts":1616739294.795515,"caller":"snapshot/v3_snapshot.go:152","msg":"saved","path":"/opt/snapshot-pre-boot.db"}
+Snapshot saved at /opt/snapshot-pre-boot.db
+
+
+
+
+7. Wake up! We have a conference call! After the reboot the master nodes came back online, but none of our applications are accessible. Check the status of the applications on the cluster. What's wrong?
+
+
+Deployment services pods are not present
+
+
+8. Luckily we took a backup. Restore the original state of the cluster using the backup file.
+
+
+Deployments: 2
+Services: 3
+
+
+
+
+$ EDCDCTL_API=3 etcdctl snapshot restore /opt/snapshot-pre-boot.db --data-dir=/var/lib/etcd-from-backup
+
+{"level":"info","ts":1616739627.2521791,"caller":"snapshot/v3_snapshot.go:296","msg":"restoring snapshot","path":"/opt/snapshot-pre-boot.db","wal-dir":"/var/lib/etcd-from-backup/member/wal","data-dir":"/var/lib/etcd-from-backup","snap-dir":"/var/lib/etcd-from-backup/member/snap"}
+{"level":"info","ts":1616739627.2963548,"caller":"mvcc/kvstore.go:380","msg":"restored last compact revision","meta-bucket-name":"meta","meta-bucket-name-key":"finishedCompactRev","restored-compact-revision":4093}
+{"level":"info","ts":1616739627.3152945,"caller":"membership/cluster.go:392","msg":"added member","cluster-id":"cdf818194e3a8c32","local-member-id":"0","added-peer-id":"8e9e05c52164694d","added-peer-peer-urls":["http://localhost:2380"]}
+{"level":"info","ts":1616739627.3587039,"caller":"snapshot/v3_snapshot.go:309","msg":"restored snapshot","path":"/opt/snapshot-pre-boot.db","wal-dir":"/var/lib/etcd-from-backup/member/wal","data-dir":"/var/lib/etcd-from-backup","snap-dir":"/var/lib/etcd-from-backup/member/snap"}
+
+
+
+$ kubectl get pods
+No resources found in default namespace.
+
+change host path in etcd file
+
+
+
+ cd /etc/kubernets/manifests
+
+vim etcd.yaml
+
+hostpath: /var/lib/etcd-from-backup
+
+
+save
+
+
+$ docker ps -a | grep etcd
+
+
+$ docker logs conatinerid
+
+
+$ sudo docker ps
+
+
+------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

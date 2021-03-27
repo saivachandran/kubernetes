@@ -2233,6 +2233,103 @@ envFrom:
         name: app-secret
  
 
+---------------------------------------------------------------------------------------------------
+
+24.03.2021
+==========
+
+
+Cluster upgrade process
+------------------------
+
+. in previous lectures we saw how kubernetes manages software releases
+
+. we keep dependencies like ETCD and Core dns now focus core controlplane components 
+
+. it's all of controlplane compontent have same versions
+
+. kube-api server is primary component in control plane is should be higher versions
+
+. control-manager, kube-scheduler,	kubectl can be x- i versions if kube-api version is x  
+
+
+. kubelet and kube-proxy could be x-2
+
+
+. kube-controll utility could be higher than kube-api server
+
+. kubernetes support upto three recent minor versions
+
+. upgrade version one minor versions at a time 
+
+. you have cluster master and worker node
+
+. first upgrade your master node then upgrade your worker node 
+
+. if you upgrade master all control plane component goes down but users can access app from worker node
+
+. you can't deploy new app, kubectl not working 
+
+. worker node upgrade one node at a time this way is recomended
+
+
+
+command
+-------
+
+$ kubeadm upgrade plan
+
+
+kubeadm not upgrade kubelet you need to upgrade mannually
+
+
+$ sudo apt-get upgrade -y kubeadm=1.12.0-00
+
+kubeadm upgrade apply v1.12.0
+
+
+$ kubectl get nodes 
+
+it shows still same version 
+
+upgrade kubelet
+
+
+
+$ sudo apt-get upgrade -y kubelet=1.12.0-00
+
+
+$ systemctl restart kubelet
+
+$ kubectl get nodes
+
+
+worker node upgrade
+-------------------
+
+$ kuebctl drain node01
+
+$ sudo apt-get upgrade -y kubeadm=1.12.0-00
+
+$ sudo apt-get upgrade -y kubelet=1.12.0-00
+
+$ sudo apt-get upgrade node config  --kubelet-version v1.12.0
+
+$ systemctl restart kubelet 
+
+$ kubectl get nodes
+
+
+$ kubectl uncordon node01
+
+-------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
 
 
 

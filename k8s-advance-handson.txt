@@ -2964,6 +2964,117 @@ $ sudo docker ps
 
 ------------------------------------------------------------------------------------------------------------------------
 
+05.04.2021
+==========
+
+Tls certificate in kubernetes
+-----------------------------
+
+$ minikube start
+
+$ minikube status
+
+$ minikube addons list
+
+# enable ingress addons
+
+$ minikube addons enable ingress
+
+to check
+
+$ kubectl get pods -n kube-system
+
+
+create deployment
+
+
+$ kubectl run nginx --image=nginx
+
+$ kubectl expose deployment nginx --port 80
+
+vim ingress.yaml
+
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: nginx
+  
+spec:
+  
+  rules:
+  - host: saiva.com
+    http:
+      paths:
+      - backend:
+          serviceName: nginx
+          servicePort: 80 
+
+
+
+$ kubectl apply -f ingress.yaml
+
+
+$ echo "$(minikube ip) saiva.com" | sudo tee -a /etc/hosts
+
+$ cat /etc/hosts | tail -n1
+
+
+Access the url
+
+
+$ curl saiva.com
+
+
+create tls certificate
+---------------------
+
+openssl req -x509 -newkey rsa:4096 -sha256 -nodes -keyout tls.key -out tls.crt -subj "/CN=saiva.com" -days 365 
+
+
+create secret
+------------
+
+$ kubectl create secret tls saiva-com-tls --cert=tls.crt --key=tls.key
+
+
+$ kubectl get secret -o yaml
+
+
+vim ingress.yaml
+
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: nginx
+  
+spec:
+  tls:
+    - secretName: saiva-com-tls1
+      hosts:
+      - saiva.com 
+  rules:
+  - host: saiva.com
+    http:
+      paths:
+      - backend:
+          serviceName: nginx
+          servicePort: 80
+
+
+$ kubectl apply -f ingress.yaml
+
+
+curl -k https://saiva.com
+
+curl --cacert tls.crt https://saiva.com
+
+----------------------------------------------------------------------------------------------------
+
+
+
+
+
+
 
 
 

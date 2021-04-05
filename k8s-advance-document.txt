@@ -2324,6 +2324,217 @@ $ kubectl uncordon node01
 
 -------------------------------------------------------------------------------------------------------------------
 
+27.03.2021
+=========
+
+kubernetes security primitives
+------------------------------
+
+. in kubernetes security is prime concern
+
+. must be all access in the host must be secure, root access disabled, password based authendication, sshkey enabled 
+
+. our focus in this lecture kubernetes security is primary concern
+
+. kube-api server center of all operatios in kubernetes, we interact using kube controll utility throuh that you can perform any opertion on the
+
+cluster
+
+. who can access and what they can do
+
+
+Different way we can authenticate api server
+-------------------------------------------
+
+files - username and password
+
+files - username and tokens
+
+Certificates
+
+External authentication provides by ldap
+
+Service Accounts
+
+
+
+what they can do
+----------------
+
+. RBAC Authorization - role based access control
+
+. ABAC Authorization - Attribute based access controll
+
+. Node authorization 
+
+. webhook authorization
+
+
+
+Tls certificates
+----------------
+
+by default all pod in the clusters each they can access each other, we can deny using network policieies 
+
+
+
+------------------------------------------------------------------------------------------------------------------------
+
+01.03.2021
+==========
+
+Authentication
+--------------
+
+. user like administrator access the cluster to perform administartor tasks
+
+. Developer to access the cluster test and deploy the application
+
+. we have end user the access the application
+
+. third party tools accessing the for the integrating purposes
+
+. kubernetes does'nt manage user account natively it relies external source like file user details, certicates, ldap
+
+. kubernetes not manage user directly, it create service accounts
+
+
+
+$ kubectl create serviceaccount sai
+
+$ kubectl get serviceaccount
+
+
+. all user accounts managed by api server whether you access cluster kubectl or api directly 
+
+. all of requests go throug kubeapi server, kubeapi server authenticate request before processing it
+
+
+Auth mechanism
+--------------
+
+1. static files - username and password
+
+2. statictoken files - username and tokens
+
+3. certificates - tls
+
+4. identity services - ldap, kerbros etc
+
+
+
+. you can create list of user and password in csv file use as source for user information 
+
+. file has three column username, password, userid, group
+
+. in user csv file optionally we have group detail
+
+. we can use usertoken file for kube-api-server authentication
+
+
+------------------------------------------------------------------------------------------------------------------------
+03.04.2021
+==========
+
+
+TLS introduction
+----------------
+
+1. What is tls certificates
+
+2. How does kubernretes use certificates
+
+3. How to generate them
+
+4. How to configure them
+
+5. How to view them
+
+6. How to troubleshoot issue related certicates
+
+
+Tls basic
+---------
+
+. certificate give gurantty trust between two parties during transaction
+
+. for example when user try to access the webserver, tls certificate ensure communication between users and server is encrypted
+
+simple scenerio
+---------------
+
+. without securing application user access banking online application, if you type credential would be sent in plain text format, hackers easily retrive the creditials will access the bank accounts
+
+. you must encrypt the data, data encrypted using key, its set of random numbers and alphabets 
+
+. it's same server deycrypt the data with private key
+
+. copy of the key also need to sent server, attackers can retrive key and retrive data (symmetric encryption method)
+
+. to overcome above issue asymmetric encryption comes 
+
+. instaed of using single key to encrypt and decrypt data, asymmetric uses a pair of key private key and public key(public lock)
+
+. key is always with me beacause it's private, lock anyone can access it's public
+
+
+Asymmetric encryption for ssh
+-----------------------------
+
+ssh-keygen
+
+id_rsa id_rsa.pub
+
+id_rsa is a private key
+
+id_rsa.pub is a public key (public lock)
+
+
+cat ~/.ssh/authorized_keys
+
+
+web server user communication uses same as ssh assymetric method
+
+---------------------------------------------------------------------------------------------------------------------
+
+TLS in kubernetes
+-----------------
+
+. kubernetes cluster consist set of master and worker nodes, commnuication between these nodes must be secure and encrypted
+
+. for example administrator interact with kubernetes cluster throuh kubectl, accessing api estabilish secure tls connection
+
+. two primary compents server certificates and client certificates 
+
+. lets start with kubeapi server exposes https service and external user use to manage kubernetes cluster, its server need certicates to secure
+
+. we generate certificate and key pair called apiserver.cert apiserver.key 
+
+. ETCD server stored information about cluster, etcdserver.crt, etcdserver.key
+
+. kubelet in worker node kubelet.crt, kubelet.key
+
+ 
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+ 
 
 
 

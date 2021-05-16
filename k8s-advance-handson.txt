@@ -3070,6 +3070,699 @@ curl --cacert tls.crt https://saiva.com
 
 ----------------------------------------------------------------------------------------------------
 
+09.04.2021
+==========
+
+RBAC IN KUBERNETES
+------------------
+
+vim developer-role.yaml
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  # "namespace" omitted since ClusterRoles are not namespaced
+  name: developer
+rules:
+- apiGroups: [""]
+  #
+  # at the HTTP level, the name of the resource for accessing Secret
+  # objects is "secrets"
+  resources: ["pods"]
+  verbs: ["get", "watch", "list"]
+- apiGroups: [""]
+
+  resources: ["configMap"]
+  verbs: ["create"]
+    
+
+$ kubectl apply -f developer-role.yaml
+
+
+
+$ kubecl get roles
+
+NAME        CREATED AT
+developer   2021-04-09T06:42:35Z
+
+
+
+vim devuser-developer-role-binding.yaml
+
+
+apiVersion: rbac.authorization.k8s.io/v1
+# This role binding allows "jane" to read pods in the "default" namespace.
+# You need to already have a Role named "pod-reader" in that namespace.
+kind: RoleBinding
+metadata:
+  name: devuser-deveolper-binding
+  namespace: default
+subjects:
+# You can specify more than one "subject"
+- kind: User
+  name: devuser # "name" is case sensitive
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  # "roleRef" specifies the binding to a Role / ClusterRole
+  kind: Role #this must be Role or ClusterRole
+  name: developer # this must match the name of the Role or ClusterRole you wish to bind to
+  apiGroup: rbac.authorization.k8s.io
+
+
+$ kubectl apply -f devuser-develper-role-binding.yaml
+
+ kubectl get rolebindings
+NAME                        ROLE             AGE
+devuser-deveolper-binding   Role/developer   3h37m
+
+$ kubectl describe role developer
+
+
+$ kubectl describe rolebinding devuser-developer-role-binding
+
+
+check your roles
+----------------
+
+$ kubectl auth can-i create deployments
+
+yes
+
+$ kubectl auth can-i delete nodes
+
+no
+
+
+$ kubectl auth can-i create deployments --as devuser
+
+no
+
+----------------------------------------------------------------------------------------------------------------
+
+12.04.2021
+==========
+
+network policy in kubernets
+---------------------------
+
+$ kubect get netpol 
+
+$ kubectl describe netpol payroll
+
+
+$ kubectl get pods -l name=payroll
+
+
+vim inernal-policy.yaml
+
+
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: internal-policy
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      name: internal
+  policyTypes:
+  - Egress
+  
+  egress:
+  - to:
+           
+    - podSelector:
+        matchLabels:
+          name: mysql
+    ports:
+    - protocol: TCP
+      port: 3306
+
+  - to:
+
+         
+    - podSelector:
+        matchLabels:
+          name: payroll
+    ports:
+    - protocol: TCP
+      port: 8080
+
+
+kubctl apply -f internal-policy.yaml
+
+
+kubectl describe netpol payroll-policy
+
+
+----------------------------------------------------------------------------------------------------------------------------
+
+16.04.2021
+----------
+
+
+Configure a Pod to Use a PersistentVolume for Storage
+-----------------------------------------------------
+
+Create an index.html file on your Node
+
+minikube ssh
+
+sudo mkdir /mnt/data
+
+sudo sh -c "echo 'Hello from Kubernetes storage' > /mnt/data/index.html"
+
+cat /mnt/data/index.html
+
+Hello from Kubernetes storage
+
+
+
+Create a PersistentVolume
+------------------------
+
+vim pv-volume.yaml
+
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: task-pv-volume
+  labels:
+    type: local
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/mnt/data"
+
+
+$ kubectl  apply -f pv-volume.yaml
+
+$ kubectl get pv task-pv-volume
+
+
+Create a PersistentVolumeClaim
+------------------------------
+
+vim pv-claim.yaml
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: task-pv-claim
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 3Gi
+
+
+$ kubectl apply -f pv-claim.yaml
+
+
+$ kubectl get pv task-pv-claim
+
+Now the output shows a STATUS of Bound.
+
+
+$ kubectl get pvc task-pv-claim
+
+
+
+Create a Pod
+The next step is to create a Pod that uses your PersistentVolumeClaim as a volume.
+
+vom pv-pod.yaml
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: task-pv-pod
+spec:
+  volumes:
+    - name: task-pv-storage
+      persistentVolumeClaim:
+        claimName: task-pv-claim
+  containers:
+    - name: task-pv-container
+      image: nginx
+      ports:
+        - containerPort: 80
+          name: "http-server"
+      volumeMounts:
+        - mountPath: "/usr/share/nginx/html"
+          name: task-pv-storage
+
+
+Create the Pod:
+
+$ kubectl apply -f pv-pod.yaml
+
+Verify that the container in the Pod is running;
+
+$ kubectl get pod task-pv-pod
+
+
+Get a shell to the container running in your Pod:
+
+$ kubectl exec -it task-pv-pod -- /bin/bash
+
+# Be sure to run these 3 commands inside the root shell that comes from
+# running "kubectl exec" in the previous step
+apt update
+apt install curl
+curl http://localhost/
+
+
+Clean up
+
+Delete the Pod, the PersistentVolumeClaim and the PersistentVolume:
+
+kubectl delete pod task-pv-pod
+kubectl delete pvc task-pv-claim
+kubectl delete pv task-pv-volume
+
+
+If you don't already have a shell open to the Node in your cluster, open a new shell the same way that you did earlier.
+
+In the shell on your Node, remove the file and directory that you created:
+
+# This assumes that your Node uses "sudo" to run commands
+# as the superuser
+sudo rm /mnt/data/index.html
+sudo rmdir /mnt/data
+
+
+-----------------------------------------------------------------------------------------------------------------
+
+23.04.2021
+==========
+
+Deploy network solution in kubernetes in kodekloud
+---------------------------------------------------
+
+
+1. In this practice test we will install weave-net POD networking solution to the cluster. Let us first inspect the setup.
+
+
+We have deployed an application called app in the default namespace. What is the state of the pod?
+
+
+$ kubectl get pods
+NAME   READY   STATUS              RESTARTS   AGE
+app    0/1     ContainerCreating   0          53s
+
+Notrunning
+
+
+2. Inspect why the POD is not running
+
+
+$ kubectl describe pod app | grep network
+  Warning  FailedCreatePodSandBox  2m35s                kubelet, node01    Failed to create pod sandbox: rpc error: code = Unknown desc = [failed to set up sandbox container "7965c42d8b313820557fea3774d1ecd34848b84df8f5dfd51ec1cfefee2b225b" network for pod "app": networkPlugin cni failed to set up pod "app_default" network: unable to allocate IP address: Post "http://127.0.0.1:6784/ip/7965c42d8b313820557fea3774d1ecd34848b84df8f5dfd51ec1cfefee2b225b": dial tcp 127.0.0.1:6784: connect: connection refused, failed to clean up sandbox container "7965c42d8b313820557fea3774d1ecd34848b84df8f5dfd51ec1cfefee2b225b" network for pod "app": networkPlugin cni failed to teardown pod "app_default" network: Delete "http://127.0.0.1:6784/ip/7965c42d8b313820557fea3774d1ecd34848b84df8f5dfd51ec1cfefee2b225b": dial tcp 127.0.0.1:6784: connect: connection refused]
+
+
+network not configured
+
+
+
+Deploy weave-net networking solution to the cluster
+
+
+Check the documentation here
+
+
+$ kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
+
+
+serviceaccount/weave-net created
+clusterrole.rbac.authorization.k8s.io/weave-net created
+clusterrolebinding.rbac.authorization.k8s.io/weave-net created
+role.rbac.authorization.k8s.io/weave-net created
+rolebinding.rbac.authorization.k8s.io/weave-net created
+daemonset.apps/weave-net created
+
+
+$ kubectl -n kube-system get pods | grep weave
+weave-net-q4djz                        2/2     Running   0          63s
+weave-net-xhfcz                        2/2     Running   0          63s
+
+
+$ kubectl get pods
+NAME   READY   STATUS    RESTARTS   AGE
+app    1/1     Running   0          8m56s
+
+
+-------------------------------------------------------------------------------------------------------------
+
+30.04.2021
+==========
+
+ingress
+-------
+
+1. We have deployed two applications. Explore the setup.
+Note: They are in different namespaces.
+
+
+kubectl get deployments.apps --all-namespaces
+
+NAMESPACE     NAME              READY   UP-TO-DATE   AVAILABLE   AGE
+app-space     default-backend   1/1     1            1           36s
+app-space     webapp-video      1/1     1            1           36s
+app-space     webapp-wear       1/1     1            1           36s
+kube-system   coredns           2/2     2            2           70m
+
+
+
+2.Let us now deploy an Ingress Controller. First, create a namespace called 'ingress-space'
+We will isolate all ingress related objects into its own namespace.
+
+Name: ingress-space
+
+
+$ kubectl create ns ingress-space
+namespace/ingress-space created
+
+$ kubectl get ns ingress-space 
+NAME            STATUS   AGE
+ingress-space   Active   38s
+
+
+
+3. The NGINX Ingress Controller requires a ConfigMap object. Create a ConfigMap object in the ingress-space.
+Use the given spec on the right. No data needs to be configured in the ConfigMap.
+
+Name: nginx-configuration
+
+
+$ kubectl create cm nginx-configuration  -n ingress-space 
+configmap/nginx-configuration created
+
+
+
+4. The NGINX Ingress Controller requires a ServiceAccount. Create a ServiceAccount in the ingress-space.
+Use the given spec on the right.
+
+Name: ingress-serviceaccount
+
+
+$ kubectl create sa ingress-serviceaccount -n ingress-space 
+serviceaccount/ingress-serviceaccount created
+
+
+
+5. We have created the Roles and RoleBindings for the ServiceAccount. Check it out!
+
+
+$ kubectl -n ingress-space get roles.rbac.authorization.k8s.io 
+NAME           CREATED AT
+ingress-role   2021-04-30T08:21:34Z
+
+
+
+6. Let us now deploy the Ingress Controller. Create a deployment using the file given.
+The Deployment configuration is given at /root/ingress-controller.yaml. There are several issues with it. Try to fix them.
+
+Deployed in the correct namespace.
+Replicas: 1
+Use the right image
+
+
+vim 
+
+ /root/ingress-controller.yaml
+
+
+change apiVersion: apps/v1
+
+namespace: ingress-space
+
+$ kubectl apply -f ingress-controller.yaml 
+deployment.apps/ingress-controller created
+
+
+7. Let us now create a service to make Ingress available to external users.
+Create a service following the given specs.
+
+Name: ingress
+Type: NodePort
+Port: 80
+TargetPort: 80
+NodePort: 30080
+Use the right selecto
+
+
+$ kubectl -n ingress-space expose deployment ingress-controller --name ingress --port 80 --target-port 80 --type Nodeport --dry-run=client -o yaml > ingress-svc.yaml
+
+
+vim ingress-svc.yaml
+
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  name: ingress
+  namespace: ingress-space
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 80
+    nodePort: 30080
+  selector:
+    name: nginx-ingress
+  type: NodePort 
+status:
+  loadBalancer: {}
+
+
+
+
+$ kubectl apply -f ingress-svc.yaml 
+service/ingress created
+
+
+
+8. Create the ingress resource to make the applications available at /wear and /watch on the Ingress service.
+Create the ingress in the app-space
+
+Ingress Created
+Path: /wear
+Path: /watch
+Configure correct backend service for /wear
+Configure correct backend service for /watch
+Configure correct backend port for /wear service
+Configure correct backend port for /watch service
+
+
+vim ingress-resource.yaml
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  namespace: app-space
+  name: test-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /wear
+        pathType: Prefix
+        backend:
+          service:
+            name: wear-service 
+            port:
+              number: 8080
+      - path: /watch
+        pathType: Prefix
+        backend:
+          service:
+            name: video-service
+            port: 
+              number: 8080 
+
+
+$ kubectl apply -f ingress-resource.yaml 
+ingress.networking.k8s.io/test-ingress created
+
+
+Access via browser
+
+https://2886795277-30080-kitek29z.environments.katacoda.com/wear
+
+https://2886795277-30080-kitek29z.environments.katacoda.com/watch
+
+
+------------------------------------------------------------------------------------------------------------
+
+05.05.2021
+==========
+
+kubernetes clutser using kubeadm in kodekloud
+--------------------------------------------
+
+1. Install the kubeadm package on master and node01
+
+   
+    kubeadm installed on Master?
+    Kubeadm installed on worker node01 
+
+on master node
+-------------
+
+vim kubeadm-install.sh
+
+#!/bin/bash
+##Update the apt package index and install packages needed to use the Kubernetes apt reposito
+sudo apt-get update
+sudo apt-get install -y apt-transport-https ca-certificates curl
+
+##Download the Google Cloud public signing key:
+
+sudo curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.go
+
+##Add the Kubernetes apt repository:
+
+echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernet
+
+##Update apt package index, install kubelet, kubeadm and kubectl, and pin their version:
+
+sudo apt-get update
+sudo apt-get install -y kubelet kubeadm kubectl
+sudo apt-mark hold kubelet kubeadm kubectl
+
+
+sh kubeadm-install.sh
+
+
+$ kubeadm version -o short
+v1.21.0
+
+$ kubelet --version
+Kubernetes v1.21.0
+
+
+on worker node
+---------------
+
+vim kubeadm-install.sh
+
+#!/bin/bash
+##Update the apt package index and install packages needed to use the Kubernetes apt reposito
+sudo apt-get update
+sudo apt-get install -y apt-transport-https ca-certificates curl
+
+##Download the Google Cloud public signing key:
+
+sudo curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.go
+
+##Add the Kubernetes apt repository:
+
+echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernet
+
+##Update apt package index, install kubelet, kubeadm and kubectl, and pin their version:
+
+sudo apt-get update
+sudo apt-get install -y kubelet kubeadm kubectl
+sudo apt-mark hold kubelet kubeadm kubectl
+
+
+sh kubeadm-install.sh
+
+
+$ kubeadm version -o short
+v1.21.0
+
+$ kubelet --version
+Kubernetes v1.21.0
+
+
+2. What is the version of kubelet installed?
+
+
+$ kubelet --version
+Kubernetes v1.21.0
+
+
+
+3. 
+
+How many nodes are part of kubernetes cluster currently?
+
+Are you able to run kubectl get nodes?
+
+
+$ kubectl get nodes
+error: the server doesn't have a resource type "nodes"
+
+Ans: 0
+
+
+4. Initialize Control Plane Node (Master Node)
+
+Once done, set up the default kubeconfig file and wait for node to be part of the cluster.
+
+    info_outline
+    Hint
+
+    Master node initialized 
+
+$ kubeadm init 
+
+mkdir -p $HOME/.kube
+  sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+  sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+ssh node01
+
+kubeadm join 172.17.0.24:6443 --token ktcszn.sumtqgtudcjhg8q9 \
+        --discovery-token-ca-cert-hash sha256:293101bf857277120647825f34660f81b9ec94fb8a737a3c65bcf5e3b50649d9 
+
+
+master node
+
+
+kubectl get nodes
+NAME           STATUS   ROLES                  AGE   VERSION
+controlplane   Ready    control-plane,master   2m    v1.21.0
+node01         Ready    <none>                 44s   v1.21.0
+
+----------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

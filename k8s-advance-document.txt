@@ -2515,6 +2515,1032 @@ TLS in kubernetes
 . kubelet in worker node kubelet.crt, kubelet.key
 
  
+-----------------------------------------------------------------------------------------------------------
+
+08.04.2021
+==========
+
+kubeconfig
+----------
+
+The kubectl command-line tool uses kubeconfig files to find the information it needs to choose a cluster and communicate with the API server of a cluster. Note: A file that is used to configure access to clusters is called a kubeconfig file. ... It does not mean that there is a file named kubeconfig
+
+
+. kubeconfig file used by client to access kube-api server information about apiserver and credential with in it 
+
+. admin user, control manager, kube proxy all use kubeconfig file communicate with kubeapi server
+
+---------------------------------------------------------------------------------------------------------------------
+
+10.04.2021
+==========
+
+image security
+--------------
+
+. lets see simple pod definition file
+
+
+vim pod.yaml
+
+apiVersion: v1
+
+kind: pod
+
+metadata:
+  name: nginx-pod
+
+spec:
+
+  containers:
+
+  - name: nginx
+    image: nginx
+
+
+
+image name is nginx what is this image where it's pull from 
+
+
+nginx/nginx
+
+user/image
+
+
+docker.io --> registry
+
+-----------------------------------------------------------------------------------------------------------------
+
+14.04.2021
+----------
+
+storage in kubernetes
+---------------------
+
+. first understand how storage works in kubernetes
+
+. understand how storage works docker 
+
+docker storage
+--------------
+
+1. storage driver
+
+2. volume driver
+
+
+docker storage
+--------------
+
+. docker storage drivers and file system
+
+. we are going to see where docker store files and how it's manges
+
+. how docker store dataes on the local file system 
+
+. when you install docker on local file system it create folder /var/lib/docker, multiple folder under it
+
+. Aufs, containers, images, volumes
+
+. docker is layered architecture when docker build images, it build in a layered architecture 
+
+. just changes it's previous layer 
+
+example docker file
+
+FROM ubuntu                                    ---> LAYER 1
+
+RUN apt-get update && apt-get install python   ---> LAYER 2
+
+RUN pip install flask flask-mysql              ---> LAYER 3
+
+COPY . /opt/source-code                        ---> LAYER 4   
+
+ENTRYPOINT                                     ---> LAYER 5
+
+
+it stores changes from previous layer 
+
+let use second docker file
+
+example docker1 file
+
+FROM ubuntu                                    ---> LAYER 1
+
+RUN apt-get update && apt-get install python   ---> LAYER 2
+
+RUN pip install flask flask-mysql              ---> LAYER 3
+
+COPY app.py /opt/source-code                        ---> LAYER 4   
+
+ENTRYPOINT                                     ---> LAYER 5
+
+
+first three layer uses previous applicatin it build from cache
+
+docker build images faster and effcient and save disk space
+
+
+. docker build images you can't modify and it's read only layer
+
+. only mdifying initiate new build
+
+
+. when you run image using this image layer it's create writable layer on top of the image
+
+. writable layer used to store data created by container, life of this layer only container is alive
+
+. when container is destoyed all date stored in conatiner is destroyed
+
+. remember all conatiner share this image to run container 
+
+. docker automaticaly create file in read write layer 
+
+. what if wish to persist data, we could add persistent volume to conatiner 
+
+. first do create volume using docker volume command
+
+
+. when you create volume $ docker create volume data_volume
+
+. folder created under /var/lib/docker/volumes/data_volume
+
+. mount this volume inside docker container
+
+$ docker run -v data_volume:/var/lib/mysql mysql
+
+Even if container is destroyed data is still active
+
+if you not create volume before docker run 
+
+$ docker run -v data_volume2:/var/lib/mysql mysql  docker automatically create volume 
+
+. this is called volume mounting
+
+. lets we have some external storage use bind mounts give complete path folder 
+
+$ docker run -v data/mysql:/var/lib/mysql mysql
+
+. volume mount mount from volume directory
+
+. bind mount mount directory from any location
+
+. using -v is old style new method is mount option --mount is prefered way 
+
+
+$ docker run --mount type=mount,source=/data/mysql,target=/var/lib/mysql  mysql 
+
+. so whois responsible for doing all of this operation, maintaining layer arch, creating writable layer, copy on write  it's storage drivers
+
+
+storage drivers
+
+. Aufs
+
+. zfs
+
+. Btrfs
+
+. Device mapper
+
+. overlay
+
+. overlay 2
+
+
+select on storage driver depend on os ubuntu default storage driver aufs, centos device mapper is better option 
+
+--------------------------------------------------------------------------------------------------------------------------------------
+
+15.04.2021
+==========
+
+volume driver plugin in docker
+------------------------------
+
+. previous lecture we saw storage driver, it will manage storage on images and container in dokcer
+
+. volumes if you want persitent storage need volumes, that volume not handled by storage driver
+
+. volumes are handled by volume driver plugin, defult volume driver plugin is local
+
+. local volume driver plugin helps create volume on host
+
+. rexrey volume driver plugin used to aws ebs, Azure file storage
+
+------------------------------------------------------------------------------------------------------------------------------
+
+kubernetes volume
+-----------------
+
+. pods created in kubernetes transient in nature, when pod created data processed and also data deleted 
+
+. data generated by pod now stored in pod. Even after deleted the data remain 
+
+
+volume & Mounts
+---------------
+
+apiVersion: v1
+
+kind: pod
+
+metadata:
+
+  name: random-number-generator
+
+spec:
+
+  containers:
+  - image: alpine
+    name: apline
+
+    command: ["/bin/sh", "-c"]
+
+    args: ["shuf -i  0-100 -n 1 >> /opt/number.out;"]
+    volumeMounts:
+    - mountpath: /opt
+      name: data-volume  
+  
+  volumes:
+  - name: data-volume   
+
+    hostpath:
+      path: /data
+      type: Directory 
+
+
+. pod get deleted the random still not deleted in host
+
+. multinode cluster not recommended 
+
+nfs,clusterfs,folcker,aws,gcp 
+
+-------------------------------------------------------------------------------------------------------------
+
+persistence volume
+------------------
+
+. persistence volume is a cluster wise pool of storage volume, configured by an administrator to be used by user deploying applications on the cluster
+
+. user now can select storage from pool using persistence volume, 
+
+lets create persistence volume
+-------------------------------
+
+apiVersion: v1
+
+kind: persistentVolume
+
+metadata:
+
+  name: pv-vol1
+
+spec:
+
+  accessModes:
+
+      - ReadWriteOnce
+  capacity
+    stoarge: 1Gi
+
+  hostpath:
+
+    path: /tmp/data
+
+  awsElasticBlockstore:
+
+    volumeID: 
+
+    fsType:
+
+
+
+. Rememeber this path not be used in production enviroment
+
+$ kubectl create -f pv-definitiobn.yaml
+
+$ kubectl get persistenceVolume
+
+
+
+
+
+
+
+supported modes
+
+
+ReadOnlyMany
+
+ReadWriteOnce
+
+ReadWritemany
+ 
+
+--------------------------------------------------------------------------------------------------------------
+
+
+20.04.2021
+==========
+
+kubernetes network
+------------------
+
+swithcing and routing
+---------------------
+
+
+key commands
+------------
+
+ip link --> to view modified interfaces
+
+ip route -- > view routing table
+
+route
+
+ip addr  --> view assigned ip adder
+
+ip addr add 192.168.1.0/24 dev eth0  --> temporarly
+
+
+view ip forward -> cat /proc/sys/net/ipv4/ip_forward
+
+echo 1 > /proc/sys/net/ipv4/ip_forward
+
+
+add permantly
+
+
+vim /etc/sysctl.conf
+
+---------------------------------------------------------------------------------------------------------------------
+
+DNS
+---
+
+The Domain Name System (DNS) is a central part of the internet, providing a way to match names (a website that you are looking for) to numbers (the address for the website). Anything connected to the internet - laptops, tablets, mobile phones, websites - has an Internet Protocol (IP) address made up of numbers.
+
+
+Kubernetes assigns each service a virtual static IP address routable within the cluster, so any connection that reaches this IP address will be automatically routed to one of the containers in the group. ... And to make things even easier, Kubernetes also generates an internal DNS entry that resolves to this IP address.
+
+
+How DNS works step by step?
+How Does the DNS Process Work?
+
+    Step 1: Requesting Website Information.
+    Step 2: Contact the Recursive DNS Servers.
+    Step 3: Query the Authoritative DNS Servers.
+    Step 4: Access the DNS Record.
+    Step 5: Final DNS Step.
+    Authoritative DNS Server.
+    Recursive Nameserver.
+
+
+What is DNS and why it is used?
+DNS is what lets users connect to websites using domain names instead of IP addresses.
+
+
+$ dig www.scanslips.in
+
+$ nslookup scanslips.in
+
+
+Core Dns
+--------
+
+CoreDNS will gather up all of the server blocks associated with the same port and combine them in to the same dnsserver. Server . The server will multiplex the queries on the port, passing them to the different plugin chains depending upon the zone. It chooses the most specific matching server block for the zone.
+
+
+-----------------------------------------------------------------------------------------------------------------
+
+Networking in Docker
+--------------------
+
+. lets start with single docker host 
+
+. when you have container different option choose them 
+
+. none network docker not attch to it any network container can't reach outisde world, from outside can't reach conatiner
+
+
+$ docker run --network none nginx
+
+. host network container attach to it host network no isolation between host and container 
+
+$ docker run --network host nginx
+
+. to prcesses not run same port 
+
+. third bridge network internal private network created and docker attached to it 
+
+. network default address 172.0.0.0
+
+. we look deeper how docker created bridge network and manage 
+
+. when docker installed on host create internal private network called by bridge by default
+
+list docker network
+-------------------
+
+$ docker network ls
+
+NETWORK ID          NAME                DRIVER              SCOPE
+6a9c8c71cbad        bridge              bridge              local
+0952588f6c66        host                host                local
+465e14845f5d        none                null                local
+
+
+. docker create network namespace for it 
+
+inspect docker network
+----------------------
+
+$ docker inspect network id
+
+
+. how does docker attach network namespace to bridge network
+
+. two interfaces for each sides
+
+
+lets see port mapping
+---------------------
+
+. we created nginx webserver with port 80 if you access conatiner with in host you will see web page
+
+. if you try to view webpage outside host you can't view webpage
+
+. to allow externel user access the conatiner, docker provides port publishing option
+
+$ docker run -p 8080:80 nginx
+
+. any traffic port 8080 on host it will forwarded to container webserver
+
+. how does traffic forward one port to another, docker add rule to docker chain create ip tables nat rule for port forwarding include conatiner ip aswell
+
+
+view docker iptables rule
+------------------------
+
+iptables -nvL -t nat
+
+
+------------------------------------------------------------------------------------------------------------------------
+
+
+cluster networking
+-----------------
+
+. kubernetes cluster consist of master and worker node , each node must have one interface connected to node
+
+. host must have uniq hostname set as well as uniq mac address 
+
+. there are some ports need to open as well
+
+. master should accept connection 6443 for api server , worker node kubecontrol tool, external users access the kubeapiserver via this port
+
+. kublet master and worker node 10250
+
+. kube scheduler open 10251 need to open
+
+. kube controll manager need to open 10252 
+
+. external access port 30000 to 32676 should be open as well
+
+. etcd port listen port 2379 for etcd client 2380 need to open
+
+-------------------------------------------------------------------------------------------------------
+
+pod networking in kubernetes
+----------------------------
+
+. Every pod should have an ip address
+
+. Every pod should communicate with other pod in same host
+
+. Every pod should communicate with other pod in different host without NAT
+
+
+. ip link add v-net-0 type bridge
+
+. ip link set dev v-net-0 up
+
+-------------------------------------------------------------------------------------------------------------
+23.04.2021
+==========
+
+Dns in kubernetes cluster
+========================
+
+pre- Requistie
+--------------
+
+. what is dns
+
+. Host/Dnslookup Dig utility
+
+. Record Type A cname 
+
+. Domain name hierarchy
+
+we also see how to setup using coredns
+
+
+Objectives
+----------
+
+. what names assigned to what objects
+
+. service dns records
+
+. pod dns records
+
+
+
+. we have 3 node kubernetes cluster pods and services deployed on them 
+
+. Each node have node name and ip address assgined to them, nodename and ip addr register in the dns server in your org
+
+. in this we discuss dns resolution with in the cluster, kubernetes deploy build in dns server by default when you setup cluster 
+
+. we focus pods and services with in the cluster, all pod and services get own ip address can communicate with each other that will be good
+
+
+lets start two pods and service
+-------------------------------
+test pod have left  ip 10.244.1.5 
+
+have web pod on the right ip 10.244.2.5
+
+both pods hosted on two different nodes , all pods and services can reach each other their ip addr
+
+. make test accessible by web pod we created service called web-service the service get an ip 10.107.37.188
+
+. whenever service is created , kubernetes dns service create record for the service, it maps service name to ip adddress
+
+. so within cluster any now reach the service using it service name
+
+
+$ curl http://web-service
+
+
+. here pods and services in same namespace they reach each other 
+
+. lets assume websevice a have seperate called apps, reach default namespace 
+
+$ curl http://web-service.apps
+
+. last name of the service is name of namespace 
+
+. all the service group together called .svc
+
+
+
+lets look depper
+----------------
+
+web-service is name of web
+
+apps is name of namespace
+
+$ curl http://web-service.apps.svc  ---> service subdomain
+
+$ curl http://web-service.apps.svc.cluster.local  --> root  fully qualified domain name for the service
+
+record for not creared for pod by default once created by us dot replaces by - in the hostname namespace remain same type set to pod 
+
+$ curl http://10-244-10-0.apps.svc  ---> for pod 
+
+
+hostname    Namespace     type     root          ip address
+ 
+webservice   apps         svc    cluster.local    10.107.373.188
+
+10-244-2-5   apps         pod    cluster.local     10.244.2.5 
+
+--------------------------------------------------------------------------------------------------------------------
+
+25.04.2021
+==========
+
+How kubernetes implements dns in cluster
+---------------------------------------
+
+. test pod and web pods
+
+. easy way resove make entry
+
+vim /etc/hosts  for test node
+
+
+web 10.244.2.5
+
+
+
+vim /etc/hosts  for web node
+
+
+test 10.244.1.5
+
+
+
+. 100's of pods and created every minute and deleted this is not a suitable solution
+
+. so we move this entry to central dns server ip 10.96.0.10
+
+
+vim /etc/hosts
+
+web 10.244.2.5
+
+test 10.244.1.5
+
+
+
+. make entry in /etc/resolve.conf
+
+nameserver  10.96.0.10
+
+. every time new pod created we add record in dns server for new pod it does for services
+
+. for pod hostname ip address dot replaces with -
+
+
+10-244-2-5   10.244.2.5
+
+
+10-244-1-5   10.244.1.5
+
+
+. kubernetes impelements dns in same way it deploy dns server with in the cluster 
+
+. v1.12 implement dns server kube-dns recommended dns v1.12 is coredns 
+
+How core dns setup
+-----------------
+
+. core dns deployed as pod in kubesystem namespace in the kubernetes cluster 
+
+. deployed as two pods as replicaset replicaset part in the deployment
+
+. coredns require configuration file 
+
+
+cat /etc/coredns/corefile 
+
+. within this file we have number of plugins configured, plugins are configured for handling error  
+
+. every record in core dns falls cluster.local domain 
+
+. here ip converted into - format disabled here enabled in core dns
+
+
+$ kubectl get configmap -n kube-system 
+
+$ kubectl get svc -n kube-system
+
+
+$ cat /var/lib/kubelet/config.yaml
+
+-------------------------------------------------------------------------------------------------------------------
+
+01.05.2021
+==========
+
+choosing kubernetes infrastructure
+----------------------------------
+
+. Depending on your requirement we can setup cluster an laptop are local machine number of way we can start
+
+. linux machine install binary manually seting up local cluster
+
+. in windows you can't setup cluster natively no binaries you must install vmware or virtualization to run linuxvm to run kubernetes
+
+. minikube deployed single node cluster 
+
+. kubeadm tool can setup single node or multinode setup
+
+
+turnkey solutions
+-----------------
+
+ourself we need to 
+
+manage vm cluster and batch
+
+update 
+
+aws kops
+
+
+
+hosted or managedsolutions
+--------------------------
+
+. kubernetes As a service
+
+. provider provisioner vm
+
+. provider installs vms
+
+. provider mainatin vm
+
+. GKE
+
+------------------------------------------------------------------
+
+turnkey solutions
+
+openshift onprem kubernetes platform 
+
+vagrant provide setup useful tools
+
+
+hosted solution
+--------------
+
+. Google container engine
+
+. openshift online 
+
+. Azure kubernetes service
+
+. EKS Amazon elastic kubernetes service
+
+
+
+
+openshift open source conatiner applications and provide some gui easily manage cluster 
+
+
+------------------------------------------------------------------------------------------------------------------------
+03.05.2021
+==========
+
+kubeadm
+=======
+
+
+. kubeadmin tool used to bootrap kubernetes cluster 
+
+. using kubeadm we can setup multinode setup for practices
+
+. As we discuss kubernetes components consist of various component 
+
+
+Master
+------
+
+1. kube-apiserver
+
+2. etcd
+
+3. node-controller
+
+4. replica-controller
+
+
+worker node
+-----------
+
+1. kubelet
+
+2. container runtime
+
+
+worker node
+-----------
+
+1. kubelet
+
+2. container runtime
+
+
+. installing all of this various component individully on different nodes 
+
+. kubeadmin help us taking care all of tasks
+
+steps
+-----
+
+setup multinode cluster using kubeadmin tool
+
+. first you need to have multiple system or virtual machine 
+
+. set one node as a master another nodes worker nodes
+
+. you must install dokcer on all the nodes 
+
+. next install kubeadmin tool on all the nodes, kubeadmin help us bootrap kubernetes cluster 
+
+. initialize the master server 
+
+. kubernetes require special network between them called pod network
+
+---------------------------------------------------------------------------------------------------------
+
+07.05.2021
+==========
+
+Troubleshooting in kubernetes
+-----------------------------
+
+1. Application failure
+
+2. Worker node failure
+
+3. control plane failure
+
+4. Networking failure
+
+
+Application failure
+-------------------
+
+. lets take two tier application webserver and databases server 
+
+. the database pod host database application serves webservice through database service 
+
+. weberevice hosted on web pod serves user to webservice 
+
+DB ==> DB Service ==> WEB ==> WEB service ==> users 
+
+. in our case user reporting issue accessing applications
+
+. first start with application frontend 
+
+
+
+. check ip of the nodeport using curl
+
+curl http://web-service-ip:nodeport
+
+next check service
+
+kubectl describe service web-service 
+
+next check pod running or restarted 
+
+kubectl get pod web
+
+
+check the logs of the application using logs command 
+
+kubectl logs web
+
+
+kubectl logs web -f --preivious 
+
+
+next check db service
+---------------------
+-------------------------------------------------------------------------------------------------------------------------
+08.05.2021
+----------
+
+
+
+control plane failure
+---------------------
+
+check nodes
+----------
+
+$ kubectl get nodes
+
+
+check status of the pod
+-----------------------
+
+$ kubectl get pods
+
+
+we have control plane component as a pod
+----------------------------------------
+
+$ kubectl get pods -n kube-system
+
+
+control plane component deploy as a services
+---------------------------------------------
+
+$ service kube-apiserver status
+
+$ service kube-controller-manager status
+
+$ service kube-scheduler status
+
+$ service kubelet status
+
+$ service kube-proxy status
+
+
+check logs of controll plane componenet
+---------------------------------------
+
+$ kubectl logs kube-apiserver-master -n kube-system
+
+$ sudo journalctl -u kube-apiserver 
+
+
+------------------------------------------------------------------------------------------------
+
+worker node failure
+------------------
+
+check nodes
+
+$ kubectl get nodes
+
+$ kubectl describe node worker-1
+
+
+check the status of kubelet
+
+
+$ service kubelet status
+
+
+check certificates
+
+----------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+	
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
